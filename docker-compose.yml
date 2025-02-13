@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  qwen-server:
+    image: ghcr.io/huggingface/text-generation-inference:latest
+    container_name: qwen-server
+    volumes:
+      - ./model:/data
+    ports:
+      - '8080:80'
+    environment:
+      - MODEL_ID=Qwen/Qwen2.5
+      - MAX_BATCH_PREFILL_TOKENS=32768
+      - QUANTIZE=bitsandbytes
+    shm_size: '20gb'
