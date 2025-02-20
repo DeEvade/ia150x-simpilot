@@ -1,0 +1,20 @@
+{
+	"$id": "myId",
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"title": "Flight",
+	"type": "object",
+	"properties": {
+		"callSign": {
+			"type": "string",
+			"description": "The callsign of the flight."
+		},
+		"action": {
+			"type": "string",
+			"description": "The action of the flight."
+		},
+		"parameter": {
+			"description": "The value of the action of the flight.",
+			"type": "float"
+		}
+	}
+}
