@@ -11,7 +11,7 @@ const client = new MongoClient(uri, {
     },
 });
 
-async function run(callsign) {
+export async function findPhonetic(callsign){
     try {
         await client.connect();
         await client.db("admin").command({ ping: 1 });
@@ -28,8 +28,6 @@ async function run(callsign) {
         return null;
     }
 }
-run().catch(console.dir);
 
-function findPhonetic(tlcs){
-    return result;
-}
+export default findPhonetic;
+
