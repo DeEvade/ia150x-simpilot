@@ -1,32 +1,53 @@
-const cheerio = require('cheerio');
+const cheerio = require("cheerio");
+const { MongoClient, ServerApiVersion } = require("mongodb");
 
-const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const uri =
+  "mongodb+srv://arontiselius:qN9aRsnlyyE42qHB@ia150x.wxac7.mongodb.net/?retryWrites=true&w=majority&appName=IA150X";
+
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  },
+});
 
 const run = async () => {
-  for (let i = 0; i < letters.length; i++) {
-    await (async () => {
-      const url = 'https://123atc.com/call-signs/' + letters[i];
+  try {
+    await client.connect();
+    console.log("Connected to MongoDB!");
+    const dbo = client.db("main");
+
+    for (let i = 0; i < letters.length; i++) {
+      const url = "https://123atc.com/call-signs/" + letters[i];
       const response = await fetch(url);
-
       const $ = cheerio.load(await response.text());
-      const $rows = $('table tbody tr');
-      const $threeLetters = $rows.find('td a');
-      const $phonetic = $rows.find('td:eq(2)');
 
-      //   console.log($.html());
-      //   console.log($rows.text());
-      $('table tbody tr').each((index, row) => {
-        let $letters = $(row).find('td').first().find('a');
-        let $phonetic = $(row).find('td').eq(1);
-        if ($phonetic.text() === '(None)') return;
+      const insertPromises = [];
 
-        console.log($letters.text() + ' : ' + $phonetic.text());
+      $("table tbody tr").each((index, row) => {
+        let $letters = $(row).find("td").first().find("a");
+        let $phonetic = $(row).find("td").eq(1);
+        if ($phonetic.text() === "(None)") return;
+
+        let objectCallSign = {
+          tlcs: $letters.text(),
+          cs: $phonetic.text(),
+        };
+
+        insertPromises.push(dbo.collection("callsigns").insertOne(objectCallSign));
       });
 
-      //   console.log($threeLetters.html());
-      //   console.log($phonetic.text());
-    })();
+      await Promise.all(insertPromises);
+    }
+  } catch (err) {
+    console.error(err);
+  } finally {
+    await client.close();
+    console.log("MongoDB connection closed.");
   }
 };
 
-run();
+run().catch(console.dir);
+
