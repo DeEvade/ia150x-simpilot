@@ -7,10 +7,8 @@ const openai = new OpenAI({
 export const processTranscription = async (transcript: string) => {
 	try {
 		const completion = await openai.chat.completions.create({
-			model: "qwen2.5-3b-instruct",
-			response_format: {
-				type: "json_object",
-			},
+			model: "qwen2.5-0.5b-instruct",
+
 			messages: [
 				{ role: "system", content: transcribeSystemPrompt },
 				{
