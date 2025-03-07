@@ -1,15 +1,18 @@
-version: '3.8'
+version: "3.8"
 
 services:
   qwen-server:
-    image: ghcr.io/huggingface/text-generation-inference:latest
+    image: vllm/vllm-openai:latest
     container_name: qwen-server
-    volumes:
-      - ./model:/data
+    platform: linux/amd64/v8
     ports:
-      - '8080:80'
+      - "8000:8080"
     environment:
-      - MODEL_ID=Qwen/Qwen2.5
-      - MAX_BATCH_PREFILL_TOKENS=32768
-      - QUANTIZE=bitsandbytes
-    shm_size: '20gb'
+      - HUGGING_FACE_HUB_TOKEN=test # vLLM token (if required)
+    command: > # Runs the vLLM command
+      --model Qwen/Qwen2.5-3B-Instruct
+      --dtype float16
+      --device cpu
+      --disable-async-output-proc
+
+    ipc: host
