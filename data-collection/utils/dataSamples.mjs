@@ -49,6 +49,7 @@ function altitudeParameter() {
 
 async function headingParameter() {
   try {
+    let usedCallsign;
     let heading = Math.floor(Math.random() * (1 + maximumHeading)) - 1
     let headingPhonetic = callSignToNato(heading.toString())
     if (heading < 100) {
@@ -65,14 +66,17 @@ async function headingParameter() {
     //more often the callsign instead of three letter thingy
     if (chance < 0.7) {
         sentence = obj.phonetic + ", " + possibleHeading[i] + headingPhonetic
+        usedCallsign = obj.phonetic;
     } else {
         sentence = obj.spoken + ", " + possibleHeading[i] + headingPhonetic
+        usedCallsign = obj.spoken;
     }
     console.log(sentence)
     return {
         sentence : sentence,
         action : "cleared heading",
         callsignObject: obj,
+        usedCallsign : usedCallsign,
         parameter : headingPhonetic
     };
   } catch (error) {
@@ -83,29 +87,33 @@ async function headingParameter() {
 }
 
 async function generateAltitudeSentence() {
-  try {
-    let sentence
-    const i = Math.floor(Math.random() * possibleAltitude.length)
-    const obj = await main()
-    const chance = Math.random()
-    const parameter = altitudeParameter();
-    //more often the callsign instead of three letter thingy
-    if (chance < 0.7) {
-      sentence = obj.phonetic + ", " + possibleAltitude[i] + parameter 
-    } else {
-      sentence = obj.spoken + ", " + possibleAltitude[i] + parameter
+    try {
+        let sentence;
+        let usedCallsign;
+        const i = Math.floor(Math.random() * possibleAltitude.length)
+        const obj = await main()
+        const chance = Math.random()
+        const parameter = altitudeParameter();
+        //more often the callsign instead of three letter thingy
+        if (chance < 0.7) {
+            sentence = obj.phonetic + ", " + possibleAltitude[i] + parameter 
+            usedCallsign = obj.phonetic;
+        } else {
+            sentence = obj.spoken + ", " + possibleAltitude[i] + parameter
+            usedCallsign = obj.spoken;
+        }
+        return {
+            sentence : sentence,
+            action : "cleared altitude",
+            callsignObject: obj,
+            usedCallsign : usedCallsign,
+            parameter : parameter
+        };
+    } catch (error) {
+        console.error("error from generateSentence: " + error)
+    } finally {
+        await closeConnection()
     }
-    return {
-        sentence : sentence,
-        action : "cleared altitude",
-        callsignObject: obj,
-        parameter : parameter
-    };
-  } catch (error) {
-    console.error("error from generateSentence: " + error)
-  } finally {
-    await closeConnection()
-  }
 }
 export async function generateSentence() {
   let chance = Math.random()
