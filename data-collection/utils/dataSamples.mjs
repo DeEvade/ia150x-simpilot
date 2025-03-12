@@ -39,13 +39,11 @@ function altitudeParameter() {
   }
   //if altitude is greater than 24 000 - convert to flight level
   if (altitude >= 24000) return "Flight level " + callSignToNato((altitude / 100).toString())
-    else if(altitude % 1000 === 500){
-        return (altitude/1000 - 0.5) + " thousand five hundred feet";
-    }
-    else
-        return altitude/1000 + " thousand" + " feet.";
+  else if (altitude % 1000 === 500) {
+    return callSignToNato(altitude / 1000 - 0.5) + " thousand five hundred feet"
+  } else return altitude / 1000 + " thousand" + " feet."
 
-//  console.log(altitude)
+  //  console.log(altitude)
 }
 
 async function headingParameter() {
