@@ -61,6 +61,13 @@ async function headingParameter() {
     let i = Math.floor(Math.random() * possibleHeading.length)
     let obj = await main()
     let sentence = obj.phonetic + ", " + possibleHeading[i] + headingPhonetic
+    const chance = Math.random()
+    //more often the callsign instead of three letter thingy
+    if (chance < 0.7) {
+        sentence = obj.phonetic + ", " + possibleHeading[i] + headingPhonetic
+    } else {
+        sentence = obj.spoken + ", " + possibleHeading[i] + headingPhonetic
+    }
     console.log(sentence)
     return {
         sentence : sentence,
@@ -80,7 +87,7 @@ async function generateAltitudeSentence() {
     let sentence
     const i = Math.floor(Math.random() * possibleAltitude.length)
     const obj = await main()
-    const chance = Math.floor(Math.random())
+    const chance = Math.random()
     const parameter = altitudeParameter();
     //more often the callsign instead of three letter thingy
     if (chance < 0.7) {
