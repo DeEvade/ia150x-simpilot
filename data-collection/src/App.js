@@ -101,7 +101,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <input value={user} onChange={(e) => setUser(e.target.value)} />
+        <input value={user} onChange={(e) => setUser(e.target.value)} placeholder="Username..." />
         <h1>Scenario Generator</h1>
         {scenario === null ? <p>Loading...</p> : <p>{scenario.sentence}</p>}
 
