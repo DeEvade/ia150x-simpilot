@@ -1,16 +1,19 @@
 import "./App.css"
 import React, { useEffect, useState, useRef } from "react"
-const getScenario = async () => {
-  const response = await fetch("http://localhost:8080/generateScenario")
-  const data = await response.json()
-  return data.sentence
-}
 
 function App() {
-  const [scenario, setScenario] = useState("")
+  const [scenario, setScenario] = useState(null)
   const [mediaRecorder, setMediaRecorder] = useState(null)
   const [audioChunks, setAudioChunks] = useState([])
   const isRecording = useRef(false)
+  const [user, setUser] = useState("")
+
+  const getScenario = async () => {
+    setScenario(null)
+    const response = await fetch("http://localhost:8080/generateScenario")
+    const data = await response.json()
+    setScenario(data)
+  }
 
   const processAudio = async () => {
     const mergedBlob = new Blob(audioChunks, { type: "audio/webm" })
@@ -22,7 +25,20 @@ function App() {
     })
     console.log("Audio processed", audioString)
 
-    //setAudioChunks([])
+    await fetch("http://localhost:8080/postScenario", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...scenario,
+        audio: audioString,
+        user,
+      }),
+    })
+
+    setAudioChunks([])
+    getScenario()
   }
 
   React.useEffect(() => {
@@ -80,13 +96,15 @@ function App() {
     }
   })
   useEffect(() => {
-    getScenario().then((data) => setScenario(data))
+    getScenario()
   }, [])
   return (
     <div className="App">
       <header className="App-header">
+        <input value={user} onChange={(e) => setUser(e.target.value)} />
         <h1>Scenario Generator</h1>
-        <p>{scenario}</p>
+        {scenario === null ? <p>Loading...</p> : <p>{scenario.sentence}</p>}
+
         {audioChunks.length > 0 && (
           <>
             <audio

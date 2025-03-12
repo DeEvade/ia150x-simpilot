@@ -31,7 +31,14 @@ app.get("/generateScenario", async (req, res) => {
   const scenario = await generateSentence()
   console.log("Scenario generated: ", scenario)
 
-  res.json( scenario )
+  res.json(scenario)
+})
+
+app.post("/postScenario", async (req, res) => {
+  console.log("Received scenario: ")
+  if (!req.body.audio) return res.json({ success: false, error: "No audio" })
+  await mongoose.connection.db.collection("speech_samples").insertOne(req.body)
+  res.json({ success: true })
 })
 
 app.listen(PORT, () => {
