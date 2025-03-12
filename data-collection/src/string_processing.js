@@ -36,6 +36,27 @@ export function callSignToNato(callsign) {
     7: "Seven",
     8: "Eight",
     9: "Niner",
+  }
+  return callsign
+    .toUpperCase()
+    .split("")
+    .map((char) => natoDict[char] || "")
+    .filter((word) => word !== "")
+    .join(" ")
+}
+
+export function numberToString(string){
+const numberDict = {
+    0: "Zero",
+    1: "One",
+    2: "Two",
+    3: "Three",
+    4: "Four",
+    5: "Five",
+    6: "Six",
+    7: "Seven",
+    8: "Eight",
+    9: "Nine",
     10: "Ten",
     11: "Eleven",
     12: "Twelve",
@@ -126,12 +147,6 @@ export function callSignToNato(callsign) {
     97: "Ninety-Seven",
     98: "Ninety-Eight",
     99: "Ninety-Nine",
-  }
-
-  return callsign
-    .toUpperCase()
-    .split("")
-    .map((char) => natoDict[char] || "")
-    .filter((word) => word !== "")
-    .join(" ")
+}
+  return numberDict[string] || "";
 }

@@ -31,7 +31,7 @@ app.get("/generateScenario", async (req, res) => {
   const scenario = await generateSentence()
   console.log("Scenario generated: ", scenario)
 
-  res.json({ scenario })
+  res.json( scenario )
 })
 
 app.listen(PORT, () => {

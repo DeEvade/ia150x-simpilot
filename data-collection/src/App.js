@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from "react"
 const getScenario = async () => {
   const response = await fetch("http://localhost:8080/generateScenario")
   const data = await response.json()
-  return data.scenario
+  return data.sentence
 }
 
 function App() {

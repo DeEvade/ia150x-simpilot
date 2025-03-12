@@ -1,5 +1,5 @@
 import { main, closeConnection } from "./findPhonetic.mjs" // Import both functions
-import { callSignToNato } from "../src/string_processing.js"
+import { callSignToNato, numberToString } from "../src/string_processing.js"
 const minimumAltitude = 1000
 const maximumAltitude = 42000
 const maximumHeading = 360
@@ -37,13 +37,14 @@ function altitudeParameter() {
   } else {
     altitude = Math.round(altitude / 1000) * 1000
   }
+        console.log(altitude)
   //if altitude is greater than 24 000 - convert to flight level
-  if (altitude >= 24000) return "Flight level " + callSignToNato((altitude / 100).toString())
-  else if (altitude % 1000 === 500) {
-    return callSignToNato(altitude / 1000 - 0.5) + " thousand five hundred feet"
-  } else return altitude / 1000 + " thousand" + " feet."
-
-  //  console.log(altitude)
+    if (altitude >= 24000) return "Flight level " + callSignToNato((altitude / 100).toString())
+    else if (altitude % 1000 !== 500) {
+        console.log(altitude)
+        return numberToString((altitude / 1000).toString()) + " thousand feet."
+    } else 
+        return numberToString((altitude / 1000 - 0.5).toString()) + " thousand five hundred feet"
 }
 
 async function headingParameter() {
@@ -61,7 +62,12 @@ async function headingParameter() {
     let obj = await main()
     let sentence = obj.phonetic + ", " + possibleHeading[i] + headingPhonetic
     console.log(sentence)
-    return sentence
+    return {
+        sentence : sentence,
+        action : "cleared heading",
+        callsignObject: obj,
+        parameter : headingPhonetic
+    };
   } catch (error) {
     console.error("error from generateSentence: " + error)
   } finally {
@@ -72,17 +78,22 @@ async function headingParameter() {
 async function generateAltitudeSentence() {
   try {
     let sentence
-    let i = Math.floor(Math.random() * possibleAltitude.length)
-    let obj = await main()
-    let chance = Math.floor(Math.random())
+    const i = Math.floor(Math.random() * possibleAltitude.length)
+    const obj = await main()
+    const chance = Math.floor(Math.random())
+    const parameter = altitudeParameter();
     //more often the callsign instead of three letter thingy
     if (chance < 0.7) {
-      sentence = obj.phonetic + ", " + possibleAltitude[i] + altitudeParameter()
+      sentence = obj.phonetic + ", " + possibleAltitude[i] + parameter 
     } else {
-      sentence = obj.spoken + ", " + possibleAltitude[i] + altitudeParameter()
+      sentence = obj.spoken + ", " + possibleAltitude[i] + parameter
     }
-    console.log(sentence)
-    return sentence
+    return {
+        sentence : sentence,
+        action : "cleared altitude",
+        callsignObject: obj,
+        parameter : parameter
+    };
   } catch (error) {
     console.error("error from generateSentence: " + error)
   } finally {
@@ -90,7 +101,7 @@ async function generateAltitudeSentence() {
   }
 }
 export async function generateSentence() {
-  let chance = Math.floor(Math.random())
+  let chance = Math.random()
 
   if (chance <= 0.5) return await generateAltitudeSentence()
   else {
