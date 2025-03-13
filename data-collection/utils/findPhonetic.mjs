@@ -43,11 +43,21 @@ async function main() {
 
 async function randomCallsign(dbo) {
   try {
-    const result = await dbo
+      let result;
+      //använder oftast "vanliga" callsigns
+      const chance = Math.random();
+      if(chance < 1/4){
+        result = await dbo
       .collection("callsigns")
       .aggregate([{ $sample: { size: 1 } }, { $project: { _id: 0, cs: 1, tlcs: 1 } }])
       .toArray()
-
+      }
+      else{
+        result = await dbo
+      .collection("callsigns_special")
+      .aggregate([{ $sample: { size: 1 } }, { $project: { _id: 0, cs: 1, tlcs: 1 } }])
+      .toArray()
+      }
     if (result.length > 0) {
       return {
         tlcs: result[0].tlcs,
