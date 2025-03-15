@@ -1,7 +1,6 @@
 import * as React from "react"
 import { useState, useRef } from "react"
-import { parseTranscribedText } from "../apiUtils"
-const openai_api_key = ""
+import { parseTranscribedText, transcribeText } from "../apiUtils"
 export default function VoiceRecorder() {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
   const [audioChunks, setAudioChunks] = useState<Blob[]>([])
@@ -45,21 +44,15 @@ export default function VoiceRecorder() {
     formData.append("model", "whisper-1")
 
     try {
-      const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${openai_api_key}`,
-        },
-        body: formData,
-      })
-      if (!response.ok) {
-        console.error("Failed to transcribe audio:", response.statusText)
+      const transcirbedText = await transcribeText(data)
+      if (!transcirbedText) {
+        setRawTranscript("failed transcribe")
+
         return
       }
-      const data = await response.json()
 
-      setRawTranscript(data.text || "Transcription failed")
-      const parsedText = await parseTranscribedText(data.text)
+      setRawTranscript(transcirbedText.text)
+      const parsedText = await parseTranscribedText(transcirbedText.text)
       if (parsedText) {
         setProcessedTranscript(parsedText.processedTranscript)
         console.log("test123", parsedText.processedTranscript)
