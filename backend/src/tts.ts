@@ -1,9 +1,9 @@
-const voiceModels = {'p225', 'p226', 'p227'};
-const ip = 0.0.0.0;
-const port = 1337;
-let availableModels = Array.from(voiceModels);
+const voiceModels = ["p225", "p226", "p227"]
+const ip = "0.0.0.0"
+const port = 1337
+let availableModels = Array.from(voiceModels)
 
-        /*
+/*
 const textToSpeech = async(command : string, plane : id) => {
     try{
        let voiceModel = id.voice; 
@@ -31,4 +31,7 @@ const planeDisappearedFromTheInsideOfTheComputerizedSimulator = (plane : id) => 
 }
             */
 
-
+export const clarifyCommand = () => {
+  //tts engine..$
+  //skicka "please repeat command"
+}

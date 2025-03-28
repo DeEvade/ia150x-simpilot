@@ -21,10 +21,13 @@
 		"multer": "^1.4.5-lts.1",
 		"node-fetch": "^3.3.2",
 		"nodemon": "^3.1.9",
-		"openai": "^4.85.2"
+		"openai": "^4.85.2",
+		"socket.io": "^4.8.1",
+		"xml2js": "^0.6.2"
 	},
 	"devDependencies": {
 		"@types/cors": "^2.8.17",
-		"@types/express": "^5.0.0"
+		"@types/express": "^5.0.0",
+		"@types/xml2js": "^0.4.14"
 	}
 }

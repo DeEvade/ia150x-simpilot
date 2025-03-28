@@ -1,20 +1,35 @@
 import Express, { Request, Response } from "express"
 import bodyParser from "body-parser"
+import { createServer } from "http"
+import { Server } from "socket.io"
 import cors from "cors"
 import { processTranscription } from "./ai"
-import { connectSocketServer } from "./tcp"
+import { connectSocketServer, sendCommandToServer } from "./tcp"
 import dotenv from "dotenv"
 import multer from "multer"
 import fs from "fs"
+import { Command, FlightData } from "../interfaces"
+import { clarifyCommand } from "./tts"
+import FlightDataStore from "./FlightDataStore"
+import { parseAction } from "./utils"
 dotenv.config()
 
 const PORT = process.env.PORT || 8080
 const app = Express()
+const server = createServer(app)
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+  },
+})
+
+new FlightDataStore(io)
 app.use(bodyParser.json())
 
 app.use(cors())
 
-connectSocketServer()
+connectSocketServer(io)
 
 const upload = multer({ dest: "uploads/" })
 
@@ -70,6 +85,30 @@ app.post("/processTranscription", async (req, res) => {
   console.log("Processing transcription...", req.body.transcript)
   const transcript = req.body.transcript
   const processedTranscript = await processTranscription(transcript)
+
+  if (processedTranscript === null) {
+    res.json({ error: "could not process transcription" })
+    return
+  }
+  console.log("flightcatastore", FlightDataStore.getInstance().getAllFlightData())
+
+  let parsedTranscript = JSON.parse(processedTranscript) as Command
+  const parsedAction = parseAction(parsedTranscript.action)
+  if (parsedAction === null) {
+    res.json({ error: "could not parse action" })
+    return
+  }
+
+  parsedTranscript.parsedAction = parsedAction
+  //Får vara null för vissa actions, men inte andra.
+  if (parsedTranscript.action == null || parsedTranscript.callSign == null) {
+    clarifyCommand()
+    res.json({ error: "did not understand command" })
+    return
+  }
+  sendCommandToServer(parsedTranscript)
+  console.log("Sent command to server")
+
   res.json({ processedTranscript })
 })
 

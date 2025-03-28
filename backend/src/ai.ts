@@ -1,16 +1,19 @@
 import OpenAI from "openai"
-const openai = new OpenAI({
-  baseURL: "http://localhost:1234/v1",
-  apiKey: "no",
-})
+import FlightDataStore from "./FlightDataStore"
+import { FlightData } from "../interfaces"
+import { callSignToNato } from "./string_processing"
+import { configDotenv } from "dotenv"
+configDotenv()
+const openai = new OpenAI()
 
 export const processTranscription = async (transcript: string) => {
   try {
     const completion = await openai.chat.completions.create({
-      model: "Qwen/Qwen2.5-3B-Instruct-GGUF",
+      model: "gpt-4o-mini",
+      temperature: 0,
 
       messages: [
-        { role: "system", content: transcribeSystemPrompt },
+        { role: "system", content: getTranscribeSystemPrompt() },
         {
           role: "user",
           content: transcript,
@@ -28,14 +31,26 @@ export const processTranscription = async (transcript: string) => {
   }
 }
 
-const transcribeSystemPrompt = `
+const getTranscribeSystemPrompt = () => {
+  let flightData = FlightDataStore.getInstance().getAllFlightData()
+  let callsigns: string[] = []
+  flightData.forEach((data: FlightData) => {
+    callsigns.push(data.callsign)
+    callsigns.push(callSignToNato(data.callsign))
+  })
+  console.log("callsigns", callsigns)
+
+  return `
 You will be given a transcribed ATC (Air traffic Controller) command. The command will consist of a call sign, action and a parameter. Your task is to extract this information into JSON format.
 
 You should try to match the callsign to one in the following list.
-CallSignList: [“WMT6767”, “ECA2UN”, “EWG1BG”, “QTR17G”, “PGT5RL”, “SAS173”]
+CallSignList: ${callsigns.join(", ")}
 
+The received callsign may differ slightly from the callsigns in the CallSignList. 
+If no callsign in the CallSignList is close to the received callsign, leave the field as null.
 
-
+You should try to match the action to one in the following list.
+ActionList: ["cleared airspeed", "cleared mach", "cleared flight level", "cleared altitude", "cleared heading", "cancel heading", "cancel speed", "cleared direct"] 
 
 Example Input: Echo Whiskey Golf One Bravo Golf Cleared to Flight Level Ninety.
 
@@ -46,6 +61,6 @@ Example Output:
 	parameter: 90
 }
 
-
 return a JSON object
 `
+}

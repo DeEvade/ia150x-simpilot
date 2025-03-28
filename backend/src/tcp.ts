@@ -1,13 +1,19 @@
 import * as net from "net"
-import { Command } from "../interfaces"
+import { Command, FlightData } from "../interfaces"
+import { parseFlightData } from "./simExtract"
+import { isValidXML } from "./utils"
+import { Server } from "socket.io"
+import FlightDataStore from "./FlightDataStore"
+
 // Define the TCP server's host and port
 const HOST = "194.17.53.68" // Replace with your server's host
 const PORT = 7835 // Replace with your server's port
-
 // Create a TCP client
 const client = new net.Socket()
-export const connectSocketServer = () => {
+
+export const connectSocketServer = (io: Server) => {
   console.log("Connecting to server...")
+  const flightDataStore = FlightDataStore.getInstance()
 
   // Connect to the server
   client.connect(PORT, HOST, () => {
@@ -15,8 +21,15 @@ export const connectSocketServer = () => {
   })
 
   // Listen for data from the server
-  client.on("data", (data) => {
-    console.log("Received from server:", data.toString())
+  client.on("data", async (data) => {
+    //    console.log("Received from server:", data.toString())
+
+    if (!(await isValidXML(data.toString()))) return
+    //console.log("Received from server:", data.toString())
+    const parsedFlightData = await parseFlightData(data.toString())
+    if (!parsedFlightData) return
+    console.log("Parsed flight data:", parsedFlightData)
+    flightDataStore.setFlightData(parsedFlightData.callsign, parsedFlightData)
   })
 
   // Handle connection closure
@@ -38,7 +51,11 @@ Example Output:
 const buildCommandString = (parameters: Command) => {
   try {
     const message = `<?xml version="1.0" encoding="UTF-8"?><NLRIn source="NARSIM" xmlns:sti="http://www.w3.org/2001/XMLSchema-instance"><flightplan>
- <callsign>${parameters.callSign}</callsign><${parameters.action}>${parameters.parameter}</${parameters.action}</flightplan></NLRIn>`
+ <callsign>${parameters.callSign}</callsign><${parameters.parsedAction.name}${
+      parameters.parsedAction.unit ? ` unit=${parameters.parsedAction.unit}` : ``
+    }>${!parameters.parameter ? "" : parameters.parameter}</${
+      parameters.parsedAction.name
+    }></flightplan></NLRIn>`
     return message
   } catch (error) {
     console.error(error)
@@ -47,9 +64,12 @@ const buildCommandString = (parameters: Command) => {
 }
 export const sendCommandToServer = (command: Command) => {
   const commandString = buildCommandString(command)
+  console.log("Sending command to server:", commandString)
+
   if (commandString === null) {
     //parseFailed() //funktionen skickar till t2s som säger åt flygledaren att prata tydligare och bättre
   } else {
     client.write(commandString)
+    console.log("Command sent to server")
   }
 }
