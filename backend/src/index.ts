@@ -67,6 +67,8 @@ app.post(
         res.status(response.status).json({ error: errorText })
       } else {
         const data = await response.json()
+        console.log("Transcription result:", data.text)
+
         res.json({ text: data.text })
       }
 

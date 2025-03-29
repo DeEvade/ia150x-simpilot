@@ -164,10 +164,36 @@ export function numberToString2(string: string) {
     8: "Eight",
     9: "Niner",
   }
-  return string
-    .toUpperCase()
-    .split("")
-    .map((char) => natoDict[char as unknown as keyof typeof natoDict] || char)
-    .filter((word: any) => word !== "")
-    .join(" ")
+  string = string.replace(/\b\d{4}\b/g, (match) => replace4DigitWords(match))
+  console.log("string is: ", string)
+
+  let newString = ""
+  for (let i = 0; i < string.length; i++) {
+    const char = string[i]
+    if (char in natoDict) {
+      newString += natoDict[char as unknown as keyof typeof natoDict] + " "
+    } else {
+      newString += char
+    }
+  }
+  return newString.trim()
+}
+/*
+function findWordsWithOnlyDigits(text) {
+  // Regular expression: Match whole words that consist of only 4 or more digits
+  const regex = /\b\d{4,}\b/g
+
+  // Find matches in the string
+  const matches = text.match(regex)
+
+  return matches || [] // Return matches or an empty array if none found
+}*/
+
+const replace4DigitWords = (text: string) => {
+  const number = Number.parseInt(text)
+  console.log("number is: ", number)
+
+  if (number % 1000 !== 500) {
+    return numberToString((number / 1000).toString()) + " thousand"
+  } else return numberToString((number / 1000 - 0.5).toString()) + " thousand five hundred"
 }

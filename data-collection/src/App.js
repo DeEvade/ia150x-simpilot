@@ -10,7 +10,7 @@ function App() {
 
   const getScenario = async () => {
     setScenario(null)
-    const response = await fetch("http://localhost:8080/generateScenario")
+    const response = await fetch(`http://${window.location.hostname}:8080/generateScenario`)
     const data = await response.json()
     setScenario(data)
   }
@@ -25,7 +25,7 @@ function App() {
     })
     console.log("Audio processed", audioString)
 
-    await fetch("http://localhost:8080/postScenario", {
+    await fetch(`http://${window.location.hostname}:8080/postScenario`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
