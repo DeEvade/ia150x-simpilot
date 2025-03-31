@@ -2,7 +2,7 @@ import { MongoClient, ServerApiVersion } from "mongodb"
 import { numberToString2 } from "./string_processing"
 const uri = "mongodb://vm.cloud.cbh.kth.se:20136/"
 const whisperURI = "http://localhost:8080"
-const testSize = 100
+const testSize = 100 //  change according to size of testing collection
 
 const client = new MongoClient(uri)
 
@@ -43,6 +43,7 @@ const run = async () => {
   }
   await client.close()
 }
+
 export const transcribeText = async (base64Audio: string) => {
   console.log("Processing base64 audio...")
 
@@ -82,7 +83,6 @@ export const transcribeText = async (base64Audio: string) => {
 function processTranscription(transcribedSentence: string): string {
   //replace all , . - with nothing
   transcribedSentence = transcribedSentence.replace(/[.,-]/g, "")
-  console.log("hello", transcribedSentence)
   let processed = numberToString2(transcribedSentence)
   console.log("processed is: ", processed)
 
@@ -122,4 +122,5 @@ function wordErrorRate(
     length: length,
   }
 }
+
 run()

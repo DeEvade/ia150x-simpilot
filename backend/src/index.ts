@@ -103,6 +103,7 @@ app.post("/processTranscription", async (req, res) => {
 
   parsedTranscript.parsedAction = parsedAction
   //Får vara null för vissa actions, men inte andra.
+  //har redan checks i sendcommand grejen, så kanske bättre att kolla där
   if (parsedTranscript.action == null || parsedTranscript.callSign == null) {
     clarifyCommand()
     res.json({ error: "did not understand command" })
