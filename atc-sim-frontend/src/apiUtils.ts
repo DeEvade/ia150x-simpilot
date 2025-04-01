@@ -1,5 +1,7 @@
 const backendPort = 8080
 const uri = `${window.location.protocol}//${window.location.hostname}:${backendPort}`
+console.log("uri is ", uri)
+
 export const transcribeText = async (audioChunks: Blob[]) => {
   console.log("Processing audio...", audioChunks.length)
   const blob = new Blob(audioChunks, { type: "audio/webm" })
@@ -36,11 +38,12 @@ export const parseTranscribedText = async (transcript: string) => {
       console.error("Failed to parse transcribed text:", response.statusText)
       return null
     }
+
     const result = await response.json()
     console.log(result)
     return result
   } catch (error: unknown) {
     console.error("Error parsing transcribed text:", error)
-    return null
+    return new Response(null)
   }
 }

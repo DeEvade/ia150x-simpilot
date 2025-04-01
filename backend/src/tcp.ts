@@ -1,10 +1,9 @@
 import * as net from "net"
-import { Command, FlightData, Action} from "../interfaces"
+import { Command, FlightData, Action } from "../interfaces"
 import { parseFlightData } from "./simExtract"
-import { isValidXML, ActionTypes}  from "./utils"
+import { isValidXML, ActionTypes } from "./utils"
 import { Server } from "socket.io"
 import FlightDataStore from "./FlightDataStore"
-
 
 // Define the TCP server's host and port
 const HOST = "194.17.53.68" // Replace with your server's host
@@ -77,21 +76,26 @@ export const sendCommandToServer = (command: Command) => {
 }
 
 export const validateCommand = async (command: Command) => {
-    //callsign matches list??
-    const flightDataStore = FlightDataStore.getInstance()
-    const callSignMatch = await flightDataStore.getFlightData(command.callSign);
-    if(!callSignMatch)
-        return false;
-    
-    if(!Object.values(ActionTypes).some(action => action.toLowerCase() === command.action.toLowerCase())){ //extremt ful - måste ju gå att göra bättre
-        return false;
-    }
-    //const validTypeOfParamter = ... 
-    // ex om type är "FL" så måste parametern vara number
-    // Skulle också vara nice om vi returnerade exakt vad som var fel och samlade in statistik 
-    // t ex 80% på callsigns, 90% på actions ...
-    
-    return true;
+  if (command.action === null || command.callSign === null) return false
+  //callsign matches list??
+  const flightDataStore = FlightDataStore.getInstance()
+  const callSignMatch = flightDataStore.getFlightData(command.callSign)
+  if (!callSignMatch) return false
+
+  if (
+    !Object.values(ActionTypes).some(
+      (action) => action.toLowerCase() === command.action.toLowerCase(),
+    )
+  ) {
+    //extremt ful - måste ju gå att göra bättre
+    return false
+  }
+  //const validTypeOfParamter = ...
+  // ex om type är "FL" så måste parametern vara number
+  // Skulle också vara nice om vi returnerade exakt vad som var fel och samlade in statistik
+  // t ex 80% på callsigns, 90% på actions ...
+
+  return true
 }
 /*
 validateCommand(

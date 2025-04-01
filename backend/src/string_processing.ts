@@ -171,3 +171,19 @@ export function numberToString2(string: string) {
     .filter((word: any) => word !== "")
     .join(" ")
 }
+export function stringToNumber(word: string): number | null {
+  const natoDict: Record<string, number> = {
+    Zero: 0,
+    One: 1,
+    Two: 2,
+    Three: 3,
+    Four: 4,
+    Five: 5,
+    Six: 6,
+    Seven: 7,
+    Eight: 8,
+    Niner: 9,
+  }
+
+  return natoDict[word] ?? null // Return the number or null if not found
+}

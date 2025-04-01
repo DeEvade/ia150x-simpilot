@@ -188,7 +188,6 @@ function findWordsWithOnlyDigits(text) {
 
   return matches || [] // Return matches or an empty array if none found
 }*/
-
 const replace4DigitWords = (text: string) => {
   const number = Number.parseInt(text)
   console.log("number is: ", number)
@@ -196,4 +195,26 @@ const replace4DigitWords = (text: string) => {
   if (number % 1000 !== 500) {
     return numberToString((number / 1000).toString()) + " thousand"
   } else return numberToString((number / 1000 - 0.5).toString()) + " thousand five hundred"
+}
+
+export function stringToNumber(word: string): string | null {
+  const natoDict: Record<string, number> = {
+    Zero: 0,
+    One: 1,
+    Two: 2,
+    Three: 3,
+    Four: 4,
+    Five: 5,
+    Six: 6,
+    Seven: 7,
+    Eight: 8,
+    Niner: 9,
+  }
+
+  return word
+    .split(" ")
+    .map((word: string) => natoDict[word] || "")
+    .filter((word: any) => word !== "")
+    .join("")
+  return natoDict[word] ? natoDict[word].toString() : null // Return the number or null if not found
 }

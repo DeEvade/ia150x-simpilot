@@ -3,6 +3,7 @@ export interface Command {
   action: string
   parsedAction: Action
   parameter: number
+  error?: string
 }
 
 export interface Action {
@@ -18,9 +19,4 @@ export interface FlightData {
   hdg: number //rad
   mach: number
   updatedAt: number
-}
-
-export interface Callsign {
-  tlcs: string
-  cs: string
 }

@@ -4,7 +4,7 @@ import { createServer } from "http"
 import { Server } from "socket.io"
 import cors from "cors"
 import { processTranscription } from "./ai"
-import { connectSocketServer, sendCommandToServer } from "./tcp"
+import { connectSocketServer, sendCommandToServer, validateCommand } from "./tcp"
 import dotenv from "dotenv"
 import multer from "multer"
 import fs from "fs"
@@ -12,6 +12,7 @@ import { Command, FlightData } from "../interfaces"
 import { clarifyCommand } from "./tts"
 import FlightDataStore from "./FlightDataStore"
 import { parseAction } from "./utils"
+import { transcribeData } from "./asr"
 dotenv.config()
 
 const PORT = process.env.PORT || 8080
@@ -33,6 +34,10 @@ connectSocketServer(io)
 
 const upload = multer({ dest: "uploads/" })
 
+app.get("/", (req: Request, res: Response) => {
+  res.send("Hello from the server!")
+})
+
 app.post(
   "/processAudio",
   upload.single("file"),
@@ -51,25 +56,16 @@ app.post(
 
       const formData = new FormData()
       formData.append("file", audioBlob, req.file.originalname)
-      formData.append("model", "whisper-1")
+      const response = await transcribeData(formData)
 
-      const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        },
-        body: formData,
-      })
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error("Failed to transcribe audio:", errorText)
-        res.status(response.status).json({ error: errorText })
+      if (response.error) {
+        const error = response.error
+        console.error("Failed to transcribe audio:", error)
+        res.status(response.status).json({ error })
       } else {
-        const data = await response.json()
-        console.log("Transcription result:", data.text)
+        console.log("Transcription result:", response)
 
-        res.json({ text: data.text })
+        res.json({ text: response })
       }
 
       // Cleanup: Remove uploaded file
@@ -83,10 +79,11 @@ app.post(
   },
 )
 
-app.post("/processTranscription", async (req, res) => {
+app.post("/processTranscription", async (req: Request, res: Response) => {
   console.log("Processing transcription...", req.body.transcript)
   const transcript = req.body.transcript
-  const processedTranscript = await processTranscription(transcript)
+  const overrideCallsigns = req.body.overrideCallsigns
+  const processedTranscript = await processTranscription(transcript, overrideCallsigns)
 
   if (processedTranscript === null) {
     res.json({ error: "could not process transcription" })
@@ -97,14 +94,15 @@ app.post("/processTranscription", async (req, res) => {
   let parsedTranscript = JSON.parse(processedTranscript) as Command
   const parsedAction = parseAction(parsedTranscript.action)
   if (parsedAction === null) {
-    res.json({ error: "could not parse action" })
+    res.json({ ...parsedTranscript, error: "could not parse action" })
     return
   }
 
   parsedTranscript.parsedAction = parsedAction
   //Får vara null för vissa actions, men inte andra.
   //har redan checks i sendcommand grejen, så kanske bättre att kolla där
-  if (parsedTranscript.action == null || parsedTranscript.callSign == null) {
+  //if (parsedTranscript.action == null || parsedTranscript.callSign == null) {
+  if (!validateCommand(parsedTranscript)) {
     clarifyCommand()
     res.json({ error: "did not understand command" })
     return

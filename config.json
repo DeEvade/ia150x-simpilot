@@ -1,0 +1,10 @@
+{
+  "asr_model": "whisper-1",
+  "asr_parameters": {
+    "temperature": 0
+  },
+  "nlu_model": "gpt-4o-mini",
+  "nlu_parameters": {
+    "temperature": 0
+  }
+}

@@ -6,14 +6,14 @@ import { configDotenv } from "dotenv"
 configDotenv()
 const openai = new OpenAI()
 
-export const processTranscription = async (transcript: string) => {
+export const processTranscription = async (transcript: string, overrideCallsigns?: string[]) => {
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0,
 
       messages: [
-        { role: "system", content: getTranscribeSystemPrompt() },
+        { role: "system", content: getTranscribeSystemPrompt(overrideCallsigns) },
         {
           role: "user",
           content: transcript,
@@ -31,20 +31,23 @@ export const processTranscription = async (transcript: string) => {
   }
 }
 
-const getTranscribeSystemPrompt = () => {
+const getTranscribeSystemPrompt = (overrideCallsigns?: string[]) => {
   let flightData = FlightDataStore.getInstance().getAllFlightData()
   let callsigns: string[] = []
   flightData.forEach((data: FlightData) => {
     callsigns.push(data.callsign)
     callsigns.push(callSignToNato(data.callsign))
   })
+  if (overrideCallsigns) {
+    callsigns = overrideCallsigns
+  }
   console.log("callsigns", callsigns)
 
   return `
 You will be given a transcribed ATC (Air traffic Controller) command. The command will consist of a call sign, action and a parameter. Your task is to extract this information into JSON format.
 
 You should try to match the callsign to one in the following list.
-CallSignList: ${callsigns.join(", ")}
+CallSignList: ${callsigns.toString()}
 
 The received callsign may differ slightly from the callsigns in the CallSignList. 
 If no callsign in the CallSignList is close to the received callsign, leave the field as null.

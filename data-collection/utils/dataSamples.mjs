@@ -1,6 +1,6 @@
 import { main, closeConnection } from "./findPhonetic.mjs" // Import both functions
 import { callSignToNato, numberToString } from "../src/string_processing.js"
-const minimumAltitude = 1000
+const minimumAltitude = 24000
 const maximumAltitude = 42000
 const maximumHeading = 360
 const minimumSpeed = 180
@@ -60,7 +60,8 @@ const possibleWaypoint = [
 const waypoints = ["GATKI", "JEROM", "KONKA", "SKEAR", "VIRGA", "PELUP", "ARN", "BROMO", "GÖTEBORG"]
 
 function altitudeParameter() {
-  let altitude = Math.floor(Math.random() * (maximumAltitude - minimumAltitude + 1)) + 1000
+  let altitude =
+    Math.floor(Math.random() * (maximumAltitude - minimumAltitude + 1)) + minimumAltitude
   //make it closest 1000 when above 10000 feet, otherwise closest 500.
   if (altitude < 10000) {
     altitude = Math.round(altitude / 500) * 500
@@ -69,11 +70,15 @@ function altitudeParameter() {
   }
   console.log(altitude)
   //if altitude is greater than 24 000 - convert to flight level
-  if (altitude >= 24000) return "Flight level " + callSignToNato((altitude / 100).toString())
+  let phonetic = ""
+  if (altitude >= 24000) phonetic = "Flight level " + callSignToNato((altitude / 100).toString())
   else if (altitude % 1000 !== 500) {
     console.log(altitude)
-    return numberToString((altitude / 1000).toString()) + " thousand feet."
-  } else return numberToString((altitude / 1000 - 0.5).toString()) + " thousand five hundred feet"
+    phonetic = numberToString((altitude / 1000).toString()) + " thousand feet."
+  } else
+    phonetic = numberToString((altitude / 1000 - 0.5).toString()) + " thousand five hundred feet"
+
+  return { altitude: altitude, phonetic: phonetic }
 }
 async function generateAltitudeSentence() {
   try {
@@ -86,10 +91,10 @@ async function generateAltitudeSentence() {
     const parameter = altitudeParameter()
     //more often the callsign instead of three letter thingy
     if (chance < 0.7) {
-      sentence = obj.phonetic + ", " + possibleAltitude[i] + parameter
+      sentence = obj.phonetic + ", " + possibleAltitude[i] + parameter.phonetic
       usedCallsign = obj.phonetic
     } else {
-      sentence = obj.spoken + ", " + possibleAltitude[i] + parameter
+      sentence = obj.spoken + ", " + possibleAltitude[i] + parameter.phonetic
       usedCallsign = obj.spoken
     }
     if (sentence.includes("level")) {
@@ -100,7 +105,8 @@ async function generateAltitudeSentence() {
       action: action,
       callsignObject: obj,
       usedCallsign: usedCallsign,
-      parameter: parameter,
+      parameterPhonetic: parameter.phonetic,
+      parameter: parameter.altitude / 100,
     }
   } catch (error) {
     console.error("error from generateAltitudeSentence: " + error)
@@ -139,7 +145,8 @@ async function headingParameter() {
       action: "cleared heading",
       callsignObject: obj,
       usedCallsign: usedCallsign,
-      parameter: headingPhonetic,
+      parameterPhonetic: headingPhonetic,
+      parameter: heading,
     }
   } catch (error) {
     console.error("error from headingParameter: " + error)
@@ -172,7 +179,8 @@ async function generateSpeedSentence() {
       action: "cleared airspeed",
       callsignObject: obj,
       usedCallsign: usedCallsign,
-      parameter: speedPhonetic,
+      parameterPhonetic: speedPhonetic,
+      parameter: speed,
     }
   } catch (error) {
     console.error("error from generateSpeedSentence: " + error)
@@ -205,7 +213,8 @@ async function generateMachSentence() {
       action: "cleared mach",
       callsignObject: obj,
       usedCallsign: usedCallsign,
-      parameter: speedPhonetic,
+      parameterPhonetic: speedPhonetic,
+      parameter: speed,
     }
   } catch (error) {
     console.error("error from generateMachSentence: " + error)
@@ -236,6 +245,7 @@ async function clearCommandSentence() {
         action: "cancel heading",
         callsignObject: obj,
         usedCallsign: usedCallsign,
+        parameterPhonetic: null,
         parameter: null,
       }
     }
@@ -254,6 +264,7 @@ async function clearCommandSentence() {
         action: "cancel speed",
         callsignObject: obj,
         usedCallsign: usedCallsign,
+        parameterPhonetic: null,
         parameter: null,
       }
     }
@@ -286,6 +297,7 @@ async function generateClearedDirect() {
       action: "cleared direct",
       callsignObject: obj,
       usedCallsign: usedCallsign,
+      parameterPhonetic: waypoints[j],
       parameter: waypoints[j],
     }
   } catch (error) {
