@@ -24,3 +24,8 @@ export interface Callsign {
   tlcs: string
   cs: string
 }
+
+export interface TTSObject {
+    audio : string
+    pilotSentence : string 
+}

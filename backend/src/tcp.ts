@@ -80,6 +80,7 @@ export const validateCommand = async (command: Command) => {
   //callsign matches list??
   const flightDataStore = FlightDataStore.getInstance()
   const callSignMatch = flightDataStore.getFlightData(command.callSign)
+  console.log("callsign : " + command.callSign + "callsignmatch: ", callSignMatch)
   if (!callSignMatch) return false
 
   if (

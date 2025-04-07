@@ -3,12 +3,16 @@ const ip = "0.0.0.0"
 const port = 1337
 let availableModels = Array.from(voiceModels)
 import { ActionTypes }  from "./utils"
-import {Command, Action} from "../interfaces"
+import {Command, Action, TTSObject} from "../interfaces"
 import { callSignToNato } from "./string_processing"
 import OpenAI from 'openai';
 import dotenv from "dotenv"
-import * as fs from 'fs';
+import { promises as fs } from 'fs';
+import { writeFileSync } from "fs";
+
+
 import type { IncomingMessage } from 'http'; 
+import { Readable } from "stream";
 
 dotenv.config();
 const openai = new OpenAI();
@@ -33,6 +37,10 @@ const cancelHeadingSentence = [
 ];
 const clearedDirectSentence = [
     "Proceeding direct to "
+];
+
+const clarifyCommandSentence = [
+    "Sorry, I didn't catch that, please repeat."
 ];
 
 
@@ -71,17 +79,24 @@ const planeDisappearedFromTheInsideOfTheComputerizedSimulator = (plane : id) => 
 }
 */
 
-export const commandToSpeech = (command : Command) => {
+export const commandToSpeech = async (command : Command): Promise<TTSObject> => {
     const input = buildTTSPhrase(command) as string;
-    sendTTS(input);
+    if(!input)
+        clarifyCommand();
+    const audio  = await sendTTS(input) ;
+    const obj :  TTSObject = {audio : audio.toString('base64'), pilotSentence : input};
+    return obj;
 }
 
-export const clarifyCommand = () => {
-    sendTTS("Sorry, I didn't catch that, please repeat.")
-}
+export const clarifyCommand = async (): Promise<TTSObject> => {
+    const input = getRandomSentence(clarifyCommandSentence);
+    const audio = await sendTTS(input);
+    const obj :  TTSObject = {audio : audio.toString('base64'), pilotSentence : input};
+    return obj;
+};
 
-const sendTTS = async (input : string) => {
-    //send to server
+const sendTTS = async (input: string): Promise<Buffer> => {
+    // Send to server
     const response = await openai.audio.speech.create({
         model: 'gpt-4o-mini-tts',
         voice: 'verse',
@@ -89,19 +104,38 @@ const sendTTS = async (input : string) => {
         instructions,
         response_format: "wav"
     });
-    console.log(response);
-    const outputStream = fs.createWriteStream('tts_output.wav');
 
-    // 💡 TypeScript fix: check for null + assert as Node stream
-    if (response.body) {
-        (response.body as unknown as NodeJS.ReadableStream).pipe(outputStream);
-        return response;
-    } else {
-        throw new Error("No response body received from OpenAI TTS.");
+    const { body } = response;
+
+    // Handle the stream as a Node.js Readable stream (e.g., PassThrough stream)
+    if (body && body instanceof Readable) {
+        const buffer = await streamToBuffer(body); // Convert the stream to a buffer
+        return buffer;
     }
-}
+
+    throw new Error("Unexpected response body type");
+};
+
+
+const streamToBuffer = (stream: Readable): Promise<Buffer> => {
+    return new Promise((resolve, reject) => {
+        const chunks: Buffer[] = [];
+        
+        stream.on('data', chunk => {
+            chunks.push(chunk);  // Collect chunks of data
+        });
+        
+        stream.on('end', () => {
+            resolve(Buffer.concat(chunks));  // Concatenate chunks and resolve as a buffer
+        });
+        
+        stream.on('error', reject);  // Reject if an error occurs
+    });
+};
 
 const buildTTSPhrase = (command: Command): string | null=> {
+    if(!command.callSign)
+        return null;
     const callSign = callSignToNato(command.callSign);
     const action = command.action as string;
     const parameter = command.parameter;
@@ -110,17 +144,40 @@ const buildTTSPhrase = (command: Command): string | null=> {
         [ActionTypes.CLEARED_FLIGHT_LEVEL]: (param, callsign) => `${getRandomSentence(clearedFlightLevelSentence)}${param}, ${callsign}.`,
             [ActionTypes.CLEARED_AIRSPEED]: (param, callsign) => `${getRandomSentence(clearedAirspeedSentence)}${param} knots, ${callsign}.`,
             [ActionTypes.CLEARED_MACH]: (param, callsign) => `${getRandomSentence(clearedMachSentence)}${param}, ${callsign}.`,
-            [ActionTypes.CLEARED_HEADING]: (param, callsign) => `${getRandomSentence(clearedHeadingSentence)}${param}, ${callsign}.`,
-            [ActionTypes.CANCEL_SPEED]: (param, callsign) => `${getRandomSentence(cancelSpeedSentence)}${param}, ${callsign}.`,
-            [ActionTypes.CANCEL_HEADING]: (param, callsign) => `${getRandomSentence(cancelHeadingSentence)}${callsign}.`,
+            [ActionTypes.CLEARED_HEADING]: (param, callsign) => {
+            const phoneticHeading = headingParameter(param);
+            return `${getRandomSentence(clearedHeadingSentence)}${phoneticHeading}, ${callsign}.`;
+        },
+        [ActionTypes.CANCEL_SPEED]: (_, callsign) => `${getRandomSentence(cancelSpeedSentence)}, ${callsign}.`,
+            [ActionTypes.CANCEL_HEADING]: (_, callsign) => `${getRandomSentence(cancelHeadingSentence)}${callsign}.`,
             [ActionTypes.CLEARED_DIRECT]: (param, callsign) => `${getRandomSentence(clearedDirectSentence)}${param}, ${callsign}.`
     };
-    //console.log(actionMap[action]?.(parameter.toString(), callSign) || null)
-    return actionMap[action]?.(parameter.toString(), callSign) || null;
+
+    const noParamActions: Set<string> = new Set([
+        ActionTypes.CANCEL_HEADING,
+        ActionTypes.CANCEL_SPEED
+    ]);
+
+    if (actionMap[action] == null) {
+        return null;
+    }
+
+    if (parameter == null && noParamActions.has(action)) {
+        return actionMap[action]!(null as any, callSign);
+    }
+
+    return actionMap[action]!(parameter.toString(), callSign);
 };
-commandToSpeech({
-    callSign: "SAS123",
-    action: "cleared flight level",
-    parsedAction: "" as unknown as Action,
-    parameter: 100
-})
+
+
+const headingParameter = (headingString : string):string =>{
+    const heading = +headingString;
+    if (heading < 100) {
+        if (heading < 10) {
+            return "Zero Zero " + heading.toString();
+        } else {
+            return "Zero " + heading.toString();
+        }
+    }
+    return heading.toString();
+}

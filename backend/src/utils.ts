@@ -31,8 +31,10 @@ const actionMap = {
 }
 
 export const parseAction = (action: string) => {
+    if(!action){
+        console.error("no discernable action")
+        return null;
+    }
   return actionMap[action.toLowerCase() as keyof typeof actionMap] || null
 }
 
-let test = parseAction("cleared flight level")
-console.log(test)

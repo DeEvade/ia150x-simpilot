@@ -7,7 +7,7 @@ export const transcribeText = async (audioChunks: Blob[]) => {
   const blob = new Blob(audioChunks, { type: "audio/webm" })
   const formData = new FormData()
   formData.append("file", blob, "audio.webm")
-  formData.append("model", "whisper-1")
+    formData.append("model", "whisper-1")
   try {
     const response = await fetch(`${uri}/processAudio`, {
       method: "POST",

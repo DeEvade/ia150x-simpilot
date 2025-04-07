@@ -52,6 +52,7 @@ CallSignList: ${callsigns.toString()}
 
 The received callsign may differ slightly from the callsigns in the CallSignList. 
 If no callsign in the CallSignList is close to the received callsign, leave the field as null.
+The callsign should always consist of 5 or 6 characters and always exactly one word.
 
 You should try to match the action to one in the following list.
 ActionList: ["cleared airspeed", "cleared mach", "cleared flight level", "cleared altitude", "cleared heading", "cancel heading", "cancel speed", "cleared direct"] 

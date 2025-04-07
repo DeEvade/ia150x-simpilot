@@ -8,7 +8,7 @@ import { connectSocketServer, sendCommandToServer, validateCommand } from "./tcp
 import dotenv from "dotenv"
 import multer from "multer"
 import fs from "fs"
-import { Command, FlightData } from "../interfaces"
+import { Command, FlightData, TTSObject} from "../interfaces"
 import { clarifyCommand, commandToSpeech } from "./tts"
 import FlightDataStore from "./FlightDataStore"
 import { parseAction } from "./utils"
@@ -94,26 +94,30 @@ app.post("/processTranscription", async (req: Request, res: Response) => {
   let parsedTranscript = JSON.parse(processedTranscript) as Command
   const parsedAction = parseAction(parsedTranscript.action)
   if (parsedAction === null) {
-    res.json({ ...parsedTranscript, error: "could not parse action" })
+    const ttsResult = await clarifyCommand()
+    res.json({ audio: ttsResult.audio, pilotSentence: ttsResult.pilotSentence, error: "did not understand command" })
     return
   }
 
   parsedTranscript.parsedAction = parsedAction
-  //Får vara null för vissa actions, men inte andra.
-  //if (parsedTranscript.action == null || parsedTranscript.callSign == null) {
   if (!validateCommand(parsedTranscript)) {
-    clarifyCommand()
-    res.json({ error: "did not understand command" })
+    const ttsResult = await clarifyCommand()
+    res.json({ audio: ttsResult.audio, pilotSentence: ttsResult.pilotSentence, error: "did not understand command" })
     return
   }
   sendCommandToServer(parsedTranscript)
   console.log("Sent command to server")
-  const audio = await commandToSpeech(parsedTranscript);
-  console.log(audio)
-
-  res.json({ processedTranscript })
-})
+  console.log("getting tts")
+  const ttsResult = await commandToSpeech(parsedTranscript) as TTSObject;
+  console.log(ttsResult)
+  res.json({
+    processedTranscript: processedTranscript,
+    audio: ttsResult.audio,
+    pilotSentence : ttsResult.pilotSentence
+  });
+});
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
+
