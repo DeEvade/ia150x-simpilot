@@ -9,7 +9,7 @@ import dotenv from "dotenv"
 import multer from "multer"
 import fs from "fs"
 import { Command, FlightData } from "../interfaces"
-import { clarifyCommand } from "./tts"
+import { clarifyCommand, commandToSpeech } from "./tts"
 import FlightDataStore from "./FlightDataStore"
 import { parseAction } from "./utils"
 import { transcribeData } from "./asr"
@@ -100,7 +100,6 @@ app.post("/processTranscription", async (req: Request, res: Response) => {
 
   parsedTranscript.parsedAction = parsedAction
   //Får vara null för vissa actions, men inte andra.
-  //har redan checks i sendcommand grejen, så kanske bättre att kolla där
   //if (parsedTranscript.action == null || parsedTranscript.callSign == null) {
   if (!validateCommand(parsedTranscript)) {
     clarifyCommand()
@@ -109,6 +108,8 @@ app.post("/processTranscription", async (req: Request, res: Response) => {
   }
   sendCommandToServer(parsedTranscript)
   console.log("Sent command to server")
+  const audio = await commandToSpeech(parsedTranscript);
+  console.log(audio)
 
   res.json({ processedTranscript })
 })

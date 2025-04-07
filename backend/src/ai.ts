@@ -4,6 +4,7 @@ import { FlightData } from "../interfaces"
 import { callSignToNato } from "./string_processing"
 import { configDotenv } from "dotenv"
 configDotenv()
+const apiKey = process.env.OPENAI_KEY;
 const openai = new OpenAI()
 
 export const processTranscription = async (transcript: string, overrideCallsigns?: string[]) => {

@@ -1,7 +1,9 @@
 {
-  "asr_model": "whisper-1",
+  "asr_model": "gpt-4o-transcribe",
   "asr_parameters": {
-    "temperature": 0
+      "temperature": 0,
+      "language": "en",
+      "include": ["logprobs"]
   },
   "nlu_model": "gpt-4o-mini",
   "nlu_parameters": {

@@ -8,13 +8,13 @@ import tiktoken, { get_encoding } from "@dqbd/tiktoken"
 const encoding = get_encoding("cl100k_base")
 
 dotenv.config()
-const config = fs.readFileSync("../config.json", "utf-8")
-const configJSON = JSON.parse(config)
+const configFile = fs.readFileSync("../config.json", "utf-8")
+const config = JSON.parse(configFile)
 const maxTokenLength = 224
 
 const commonWords = ["cleared"]
 
-console.log("config is: ", config)
+console.log("config is: ", configFile)
 
 const callSigns: Callsign[] = []
 
@@ -42,9 +42,14 @@ const initMongo = async () => {
 initMongo()
 export const transcribeData = async (formData: FormData) => {
   try {
-    formData.append("model", configJSON.asr_model)
+    formData.append("model", config.asr_model)
     const prompt = generateASRPrompt()
     //formData.append("prompt", prompt)
+    /*
+    for (const [key, value] of Object.entries(config.asr_parameters)) {
+        formData.append(key, value)
+    }
+    */
     const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
       method: "POST",
       headers: {
@@ -60,6 +65,7 @@ export const transcribeData = async (formData: FormData) => {
     } else {
       const data = await response.json()
       console.log("Transcription result:", data.text)
+     // console.log("probability log data:" data.logprobs)
       return data.text
     }
   } catch (error) {
