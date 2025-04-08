@@ -44,6 +44,8 @@ const getTranscribeSystemPrompt = (overrideCallsigns?: string[]) => {
   }
   console.log("callsigns", callsigns)
 
+  //Kanske borde para ihop alla callsignsigns, t ex [{SAS123, Sierra alpha sierra one two three, Scandinavian 123}, {UAL321, Uniform alpha lima three two one, United 321}]
+  //och sedan säga att om den hör en av de så ta den som är längst till vänster
   return `
 You will be given a transcribed ATC (Air traffic Controller) command. The command will consist of a call sign, action and a parameter. Your task is to extract this information into JSON format.
 
