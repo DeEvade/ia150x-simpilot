@@ -34,10 +34,14 @@ export const processTranscription = async (transcript: string, overrideCallsigns
 
 const getTranscribeSystemPrompt = (overrideCallsigns?: string[]) => {
   let flightData = FlightDataStore.getInstance().getAllFlightData()
-  let callsigns: string[] = []
+  let callsigns: Object[] = []
+  //lägg in icao också
   flightData.forEach((data: FlightData) => {
-    callsigns.push(data.callsign)
-    callsigns.push(callSignToNato(data.callsign))
+    callsigns.push({
+        idCallsign: data.callsign,
+        phoneticCallsign:callSignToNato(data.callsign),
+        icaoCallsign: ""
+        })
   })
   if (overrideCallsigns) {
     callsigns = overrideCallsigns
@@ -50,10 +54,11 @@ const getTranscribeSystemPrompt = (overrideCallsigns?: string[]) => {
 You will be given a transcribed ATC (Air traffic Controller) command. The command will consist of a call sign, action and a parameter. Your task is to extract this information into JSON format.
 
 You should try to match the callsign to one in the following list.
-CallSignList: ${callsigns.toString()}
+CallSignList: [${callsigns.map(x => JSON.stringify(x))}]
 
 The received callsign may differ slightly from the callsigns in the CallSignList. 
 If no callsign in the CallSignList is close to the received callsign, leave the field as null.
+If you match with any of the objects in the CallSignList, always choose the idCallsign.
 The callsign should always consist of 5 or 6 characters and always exactly one word.
 
 You should try to match the action to one in the following list.
