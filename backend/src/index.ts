@@ -8,7 +8,7 @@ import { connectSocketServer, sendCommandToServer, validateCommand } from "./tcp
 import dotenv from "dotenv"
 import multer from "multer"
 import fs from "fs"
-import { Command, FlightData, TTSObject} from "../interfaces"
+import { CallsignObject, Command, FlightData, TTSObject } from "../interfaces"
 import { clarifyCommand, commandToSpeech } from "./tts"
 import FlightDataStore from "./FlightDataStore"
 import { parseAction } from "./utils"
@@ -82,7 +82,7 @@ app.post(
 app.post("/processTranscription", async (req: Request, res: Response) => {
   console.log("Processing transcription...", req.body.transcript)
   const transcript = req.body.transcript
-  const overrideCallsigns = req.body.overrideCallsigns
+  const overrideCallsigns: CallsignObject[] = req.body.overrideCallsigns
   const processedTranscript = await processTranscription(transcript, overrideCallsigns)
 
   if (processedTranscript === null) {
@@ -93,31 +93,46 @@ app.post("/processTranscription", async (req: Request, res: Response) => {
 
   let parsedTranscript = JSON.parse(processedTranscript) as Command
   const parsedAction = parseAction(parsedTranscript.action)
+
+  if (overrideCallsigns) {
+    res.json({
+      processedTranscript,
+    })
+    return
+  }
   if (parsedAction === null) {
     const ttsResult = await clarifyCommand()
-    res.json({ audio: ttsResult.audio, pilotSentence: ttsResult.pilotSentence, error: "did not understand command" })
+    res.json({
+      audio: ttsResult.audio,
+      pilotSentence: ttsResult.pilotSentence,
+      error: "did not understand command",
+    })
     return
   }
 
   parsedTranscript.parsedAction = parsedAction
   if (!validateCommand(parsedTranscript)) {
     const ttsResult = await clarifyCommand()
-    res.json({ audio: ttsResult.audio, pilotSentence: ttsResult.pilotSentence, error: "did not understand command" })
+    res.json({
+      audio: ttsResult.audio,
+      pilotSentence: ttsResult.pilotSentence,
+      error: "did not understand command",
+    })
     return
   }
+
   sendCommandToServer(parsedTranscript)
   console.log("Sent command to server")
   console.log("getting tts")
-  const ttsResult = await commandToSpeech(parsedTranscript) as TTSObject;
-  console.log(ttsResult)
+  const ttsResult: TTSObject = await commandToSpeech(parsedTranscript)
+  //console.log(ttsResult)
   res.json({
     processedTranscript: processedTranscript,
-    audio: ttsResult.audio,
-    pilotSentence : ttsResult.pilotSentence
-  });
-});
+    audio: ttsResult?.audio,
+    pilotSentence: ttsResult?.pilotSentence,
+  })
+})
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
-

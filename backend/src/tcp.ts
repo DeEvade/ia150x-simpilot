@@ -28,7 +28,7 @@ export const connectSocketServer = (io: Server) => {
     //console.log("Received from server:", data.toString())
     const parsedFlightData = await parseFlightData(data.toString())
     if (!parsedFlightData) return
-    console.log("Parsed flight data:", parsedFlightData)
+    //console.log("Parsed flight data:", parsedFlightData)
     flightDataStore.setFlightData(parsedFlightData.callsign, parsedFlightData)
   })
 

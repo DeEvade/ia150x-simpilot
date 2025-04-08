@@ -20,3 +20,9 @@ export interface FlightData {
   mach: number
   updatedAt: number
 }
+
+export interface CallsignObject {
+  written: string
+  spoken: string
+  phonetic: string
+}

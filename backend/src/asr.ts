@@ -12,7 +12,7 @@ const configFile = fs.readFileSync("../config.json", "utf-8")
 const config = JSON.parse(configFile)
 const maxTokenLength = 224
 
-const commonWords = ["cleared"]
+const commonWords = ["cleared", "mach", "decimal", "level", "climb", "maintain", "descend"]
 
 console.log("config is: ", configFile)
 
@@ -65,7 +65,7 @@ export const transcribeData = async (formData: FormData) => {
     } else {
       const data = await response.json()
       console.log("Transcription result:", data.text)
-     // console.log("probability log data:" data.logprobs)
+      // console.log("probability log data:" data.logprobs)
       return data.text
     }
   } catch (error) {
@@ -104,6 +104,6 @@ const generateASRPrompt = async (): Promise<string> => {
     i++
   }
 
-  console.log(result)
+  //console.log(result)
   return result
 }

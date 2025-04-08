@@ -1,9 +1,9 @@
 import { Document, MongoClient, ServerApiVersion, WithId } from "mongodb"
 import { numberToString2, stringToNumber } from "./string_processing"
 import { parseTranscribedText, transcribeText } from "./utils"
-import { Command } from "./interfaces"
+import { CallsignObject, Command } from "./interfaces"
 const uri = "mongodb://vm.cloud.cbh.kth.se:20136/"
-const batchSize = 1
+const batchSize = 5
 //const testSize = 100 //  change according to size of testing collection
 let callsignCounter = 0
 let actionCounter = 0
@@ -14,11 +14,7 @@ const counter = { totalCounter, callsignCounter, actionCounter, parameterCounter
 interface TestCase {
   sentence: string
   action: string
-  callsignObject: {
-    written: string
-    spoken: string
-    phonetic: string
-  }
+  callsignObject: CallsignObject
   usedCallsign: string
   parameterPhonetic: string
   parameter: number
@@ -52,7 +48,8 @@ const run = async () => {
       let transcribedSentence = await transcribeText(testCase.audio)
       testCasesArray.push({ testCase, transcribedSentence })
     }
-    await entityAndIntentTest(testCasesArray)
+    const scrambledArray = shuffleArray([...testCasesArray])
+    await entityAndIntentTest(scrambledArray)
     console.log("wrong: ", counter)
     console.log("-------------------------------------------------------")
     console.log("-------------------------------------------------------")
@@ -60,10 +57,9 @@ const run = async () => {
 }
 
 async function entityAndIntentTest(testCasesArray: FullTestCase[]) {
-  let callSignArray: string[] = []
+  let callSignArray: CallsignObject[] = []
   testCasesArray.forEach((testCase) => {
-    callSignArray.push(testCase.testCase.callsignObject.written)
-    callSignArray.push(testCase.testCase.usedCallsign)
+    callSignArray.push(testCase.testCase.callsignObject)
   })
 
   for (const testCase of testCasesArray) {
@@ -107,7 +103,7 @@ async function entityAndIntentTest(testCasesArray: FullTestCase[]) {
         }
       }
       if (somethingWrong) {
-        totalCounter++
+        counter.totalCounter++
       }
     } catch (error) {
       counter.totalCounter++
@@ -120,3 +116,12 @@ async function entityAndIntentTest(testCasesArray: FullTestCase[]) {
 }
 
 run()
+
+//Fisher yates not ours
+function shuffleArray(array: any[]) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1)) // random index from 0 to i
+    ;[array[i], array[j]] = [array[j], array[i]] // swap elements
+  }
+  return array
+}

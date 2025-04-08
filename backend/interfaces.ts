@@ -5,6 +5,12 @@ export interface Command {
   parameter: number
 }
 
+export interface CallsignObject {
+  written: string
+  spoken: string
+  phonetic: string
+}
+
 export interface Action {
   name: string
   unit: string | null
@@ -26,6 +32,6 @@ export interface Callsign {
 }
 
 export interface TTSObject {
-    audio : string
-    pilotSentence : string 
+  audio: string
+  pilotSentence: string
 }

@@ -1,13 +1,16 @@
 import OpenAI from "openai"
 import FlightDataStore from "./FlightDataStore"
-import { FlightData } from "../interfaces"
+import { CallsignObject, FlightData } from "../interfaces"
 import { callSignToNato } from "./string_processing"
 import { configDotenv } from "dotenv"
 configDotenv()
-const apiKey = process.env.OPENAI_KEY;
+const apiKey = process.env.OPENAI_KEY
 const openai = new OpenAI()
 
-export const processTranscription = async (transcript: string, overrideCallsigns?: string[]) => {
+export const processTranscription = async (
+  transcript: string,
+  overrideCallsigns?: CallsignObject[],
+) => {
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -32,16 +35,16 @@ export const processTranscription = async (transcript: string, overrideCallsigns
   }
 }
 
-const getTranscribeSystemPrompt = (overrideCallsigns?: string[]) => {
+const getTranscribeSystemPrompt = (overrideCallsigns?: CallsignObject[]) => {
   let flightData = FlightDataStore.getInstance().getAllFlightData()
   let callsigns: Object[] = []
   //lägg in icao också
   flightData.forEach((data: FlightData) => {
     callsigns.push({
-        idCallsign: data.callsign,
-        phoneticCallsign:callSignToNato(data.callsign),
-        icaoCallsign: ""
-        })
+      idCallsign: data.callsign,
+      phoneticCallsign: callSignToNato(data.callsign),
+      icaoCallsign: "",
+    })
   })
   if (overrideCallsigns) {
     callsigns = overrideCallsigns
@@ -54,11 +57,11 @@ const getTranscribeSystemPrompt = (overrideCallsigns?: string[]) => {
 You will be given a transcribed ATC (Air traffic Controller) command. The command will consist of a call sign, action and a parameter. Your task is to extract this information into JSON format.
 
 You should try to match the callsign to one in the following list.
-CallSignList: [${callsigns.map(x => JSON.stringify(x))}]
+CallSignList: [${callsigns.map((x) => JSON.stringify(x))}]
 
 The received callsign may differ slightly from the callsigns in the CallSignList. 
 If no callsign in the CallSignList is close to the received callsign, leave the field as null.
-If you match with any of the objects in the CallSignList, always choose the idCallsign.
+If you match with any of the objects in the CallSignList, always choose the "written".
 The callsign should always consist of 5 or 6 characters and always exactly one word.
 
 You should try to match the action to one in the following list.

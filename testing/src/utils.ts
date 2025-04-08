@@ -1,3 +1,5 @@
+import { CallsignObject } from "./interfaces"
+
 const backend = "http://localhost:8080"
 
 export const transcribeText = async (base64Audio: string) => {
@@ -36,7 +38,10 @@ export const transcribeText = async (base64Audio: string) => {
   }
 }
 
-export const parseTranscribedText = async (transcript: string, callsignsArray: string[]) => {
+export const parseTranscribedText = async (
+  transcript: string,
+  callsignsArray: CallsignObject[],
+) => {
   try {
     const response = await fetch(`${backend}/processTranscription`, {
       method: "POST",
@@ -50,7 +55,7 @@ export const parseTranscribedText = async (transcript: string, callsignsArray: s
       return null
     }
     const result = await response.json()
-    console.log(result)
+    //console.log(result)
     return result
   } catch (error: unknown) {
     console.error("Error parsing transcribed text:", error)
