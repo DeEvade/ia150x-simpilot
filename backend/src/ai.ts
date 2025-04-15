@@ -154,6 +154,30 @@ Ryanair two two one resume normal speed when able.
 }
 </assistant_response>
 
+<user_query>
+Sierra alpha sierra One Six neon torn lift to one niner nine.
+</user_query>
+
+<assistant_response>
+{
+	callSign: “SAS169”,
+	action: “cleared heading”,
+	parameter: 199
+}
+</assistant_response>
+
+<user_query>
+Pioneer damp, increase speed to five hundred knots.
+</user_query>
+
+<assistant_response>
+{
+	callSign: null,
+	action: “cleared speed”,
+	parameter: 500
+}
+</assistant_response>
+
 return a JSON object
 `
 }
