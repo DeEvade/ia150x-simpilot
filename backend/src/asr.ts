@@ -72,20 +72,25 @@ export const transcribeData = async (formData: FormData) => {
     return { error: "Error processing audio" }
   }
 }
-const generateASRPrompt = async (): Promise<string> => {
+const generateASRPrompt = async (overrideCallsigns?: string[]): Promise<string> => {
   const callsigns: string[] = []
   let result = ""
-  let flightData = FlightDataStore.getInstance().getAllFlightData()
+  if(overrideCallsigns){
+      callsigns = overrideCallsigns;
+  }
+  else{
+      let flightData = FlightDataStore.getInstance().getAllFlightData()
 
-  flightData.forEach((data: FlightData) => {
-    callsigns.push(data.callsign)
-    const threeLetters = data.callsign.slice(0, 3)
-    const callsign = callSigns.find((callsign: Callsign) => callsign.tlcs === threeLetters)
-    if (callsign) {
-      const phonetic = callsign.cs + " " + data.callsign.slice(3)
-      callsigns.push(phonetic)
-    }
-  })
+      flightData.forEach((data: FlightData) => {
+          callsigns.push(data.callsign)
+          const threeLetters = data.callsign.slice(0, 3)
+          const callsign = callSigns.find((callsign: Callsign) => callsign.tlcs === threeLetters)
+          if (callsign) {
+              const phonetic = callsign.cs + " " + data.callsign.slice(3)
+              callsigns.push(phonetic)
+          }
+      })
+  }
   result += callsigns.toString()
   let i = 0
   let lengthInToken = encoding.encode(result).length
