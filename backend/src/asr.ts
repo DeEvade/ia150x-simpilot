@@ -15,7 +15,6 @@ const maxTokenLength = 224
 const commonWords = ["cleared", "mach", "decimal", "level", "climb", "maintain", "descend"]
 
 console.log("config is: ", configFile)
-
 const callSigns: Callsign[] = []
 
 const initMongo = async () => {

@@ -33,6 +33,7 @@ const getRandomSentence = (array: string[]): string => {
   const randomIndex = Math.floor(Math.random() * array.length)
   return array[randomIndex]
 }
+
 /*
     const textToSpeech = async(command : string, plane : id) => {
     try{

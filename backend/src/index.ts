@@ -13,16 +13,17 @@ import { clarifyCommand, commandToSpeech } from "./tts"
 import FlightDataStore from "./FlightDataStore"
 import { parseAction } from "./utils"
 import { transcribeData } from "./asr"
+import { log } from "console"
 dotenv.config()
 
 const PORT = process.env.PORT || 8080
 const app = Express()
 const server = createServer(app)
 const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-  },
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST", "PUT", "DELETE"],
+    },
 })
 
 new FlightDataStore(io)
@@ -35,104 +36,104 @@ connectSocketServer(io)
 const upload = multer({ dest: "uploads/" })
 
 app.get("/", (req: Request, res: Response) => {
-  res.send("Hello from the server!")
+    res.send("Hello from the server!")
 })
 
 app.post(
-  "/processAudio",
-  upload.single("file"),
-  async (req: Request, res: Response): Promise<void> => {
-    console.log("Processing audio...")
+    "/processAudio",
+    upload.single("file"),
+    async (req: Request, res: Response): Promise<void> => {
+        console.log("Processing audio...")
 
-    if (!req.file) {
-      res.status(400).json({ error: "No audio file uploaded" })
-      return
-    }
+        if (!req.file) {
+            res.status(400).json({ error: "No audio file uploaded" })
+            return
+        }
 
-    try {
-      const audioFilePath = req.file.path
-      const audioBuffer = fs.readFileSync(audioFilePath)
-      const audioBlob = new Blob([audioBuffer], { type: "audio/wav" })
+        try {
+            const audioFilePath = req.file.path
+            const audioBuffer = fs.readFileSync(audioFilePath)
+            const audioBlob = new Blob([audioBuffer], { type: "audio/wav" })
 
-      const formData = new FormData()
-      formData.append("file", audioBlob, req.file.originalname)
-      const response = await transcribeData(formData)
+            const formData = new FormData()
+            formData.append("file", audioBlob, req.file.originalname)
+            const response = await transcribeData(formData)
 
-      if (response.error) {
-        const error = response.error
-        console.error("Failed to transcribe audio:", error)
-        res.status(response.status).json({ error })
-      } else {
-        console.log("Transcription result:", response)
+            if (response.error) {
+                const error = response.error
+                console.error("Failed to transcribe audio:", error)
+                res.status(response.status).json({ error })
+            } else {
+                console.log("Transcription result:", response)
 
-        res.json({ text: response })
-      }
+                res.json({ text: response })
+            }
 
-      // Cleanup: Remove uploaded file
-      fs.unlink(audioFilePath, (err) => {
-        if (err) console.error("Failed to delete temp file:", err)
-      })
-    } catch (error: any) {
-      console.error("Error processing audio:", error)
-      res.status(500).json({ error: error.message })
-    }
-  },
+            // Cleanup: Remove uploaded file
+            fs.unlink(audioFilePath, (err) => {
+                if (err) console.error("Failed to delete temp file:", err)
+            })
+        } catch (error: any) {
+            console.error("Error processing audio:", error)
+            res.status(500).json({ error: error.message })
+        }
+    },
 )
 
 app.post("/processTranscription", async (req: Request, res: Response) => {
-  console.log("Processing transcription...", req.body.transcript)
-  const transcript = req.body.transcript
-  const overrideCallsigns: CallsignObject[] = req.body.overrideCallsigns
-  const processedTranscript = await processTranscription(transcript, overrideCallsigns)
+    console.log("Processing transcription...", req.body.transcript)
+    const transcript = req.body.transcript
+    const overrideCallsigns: CallsignObject[] = req.body.overrideCallsigns
+    const processedTranscript = await processTranscription(transcript, overrideCallsigns)
 
-  if (processedTranscript === null) {
-    res.json({ error: "could not process transcription" })
-    return
-  }
-  console.log("flightcatastore", FlightDataStore.getInstance().getAllFlightData())
+    if (processedTranscript === null) {
+        res.json({ error: "could not process transcription" })
+        return
+    }
+    console.log("flightcatastore", FlightDataStore.getInstance().getAllFlightData())
 
-  let parsedTranscript = JSON.parse(processedTranscript) as Command
-  const parsedAction = parseAction(parsedTranscript.action)
+    let parsedTranscript = JSON.parse(processedTranscript) as Command
+    const parsedAction = parseAction(parsedTranscript.action)
 
-  if (overrideCallsigns) {
+    if (overrideCallsigns) {
+        res.json({
+            processedTranscript,
+        })
+        return
+    }
+    if (parsedAction === null) {
+        const ttsResult = await clarifyCommand()
+        res.json({
+            audio: ttsResult.audio,
+            pilotSentence: ttsResult.pilotSentence,
+            error: "did not understand command",
+        })
+        return
+    }
+
+    parsedTranscript.parsedAction = parsedAction
+    if (!validateCommand(parsedTranscript)) {
+        const ttsResult = await clarifyCommand()
+        res.json({
+            audio: ttsResult.audio,
+            pilotSentence: ttsResult.pilotSentence,
+            error: "did not understand command",
+        })
+        return
+    }
+
+    sendCommandToServer(parsedTranscript)
+    console.log("Sent command to server")
+    console.log("getting tts")
+    const ttsResult: TTSObject = await commandToSpeech(parsedTranscript)
+    //console.log(ttsResult)
     res.json({
-      processedTranscript,
+        processedTranscript: processedTranscript,
+        audio: ttsResult?.audio,
+        pilotSentence: ttsResult?.pilotSentence,
     })
-    return
-  }
-  if (parsedAction === null) {
-    const ttsResult = await clarifyCommand()
-    res.json({
-      audio: ttsResult.audio,
-      pilotSentence: ttsResult.pilotSentence,
-      error: "did not understand command",
-    })
-    return
-  }
-
-  parsedTranscript.parsedAction = parsedAction
-  if (!validateCommand(parsedTranscript)) {
-    const ttsResult = await clarifyCommand()
-    res.json({
-      audio: ttsResult.audio,
-      pilotSentence: ttsResult.pilotSentence,
-      error: "did not understand command",
-    })
-    return
-  }
-
-  sendCommandToServer(parsedTranscript)
-  console.log("Sent command to server")
-  console.log("getting tts")
-  const ttsResult: TTSObject = await commandToSpeech(parsedTranscript)
-  //console.log(ttsResult)
-  res.json({
-    processedTranscript: processedTranscript,
-    audio: ttsResult?.audio,
-    pilotSentence: ttsResult?.pilotSentence,
-  })
 })
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
+    console.log(`Server running on port ${PORT}`)
 })

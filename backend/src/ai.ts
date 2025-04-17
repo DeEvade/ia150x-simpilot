@@ -54,14 +54,9 @@ const getTranscribeSystemPrompt = (overrideCallsigns?: CallsignObject[]) => {
   //Kanske borde para ihop alla callsignsigns, t ex [{SAS123, Sierra alpha sierra one two three, Scandinavian 123}, {UAL321, Uniform alpha lima three two one, United 321}]
   //och sedan säga att om den hör en av de så ta den som är längst till vänster
   return `
-
-
-
-
-
 # Identity
 
-You are tasked to extract information from an ATC (Air Traffic Controller) command, as well as a list of available callsigns. 
+You are tasked to extract information from an ATC (Air Traffic Controller) commandi. 
 
 # Instructions
 
@@ -72,7 +67,7 @@ You will be given the following:
     - spoken: Consists of the same callsign, but the letters are in the NATO phonetic alphabet, and any numbers are in spoken format. (Example: Sierra alpha sierra one two three)
     - phonetic: Consists of the same callsign, but uses the callsign's ICAO code. (Example: Scandinavian one two three)
 
-Your task is to use the transcription to extract the command's callsign, action and parameter.
+Your task is to use the transcription to extract the command's callsign, action and parameter into a JSON format.
 
 - Callsign:
     The callsign must be one of the callsigns in the given list of possible callsigns.
