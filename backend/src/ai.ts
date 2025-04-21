@@ -55,6 +55,19 @@ const getTranscribeSystemPrompt = (overrideCallsigns?: CallsignObject[]) => {
   //och sedan säga att om den hör en av de så ta den som är längst till vänster
   return `
 # Identity
+<<<<<<< Updated upstream
+=======
+
+You are tasked to extract information from an ATC (Air Traffic Controller) command, as well as a list of available callsigns. 
+
+# Instructions
+
+You will be given the following:
+* A transcribed ATC (Air traffic Controller) command. The command will consist of a callsign, an action and a parameter. 
+* A list of possible callsigns .
+
+Your task is to use the transcription
+>>>>>>> Stashed changes
 
 You are tasked to extract information from an ATC (Air Traffic Controller) commandi. 
 
