@@ -2,19 +2,11 @@ import { Document, MongoClient, ServerApiVersion, WithId } from "mongodb"
 import { numberToString2, stringToNumber } from "./string_processing"
 import { parseTranscribedText, transcribeText } from "./utils"
 import { CallsignObject, Command } from "./interfaces"
+import * as fs from "fs"
+import * as path from "path"
 const uri = "mongodb://vm.cloud.cbh.kth.se:20136/"
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 const batchSize = 5
-//const testSize = 100 //  change according to size of testing collection
-=======
-    const batchSize = 10
 const testSize = 50 //  change according to size of testing collection
->>>>>>> Stashed changes
-=======
-    const batchSize = 10
-const testSize = 50 //  change according to size of testing collection
->>>>>>> Stashed changes
 let callsignCounter = 0
 let actionCounter = 0
 let parameterCounter = 0
@@ -39,6 +31,8 @@ interface FullTestCase {
 const client = new MongoClient(uri)
 
 const run = async () => {
+  const logFilePath = path.join(__dirname, "fullTest.log")
+
   await client.connect()
   console.log("Connected to MongoDB!")
   const dbo = client.db("main")
@@ -64,25 +58,21 @@ const run = async () => {
     console.log("-------------------------------------------------------")
     console.log("-------------------------------------------------------")
   }
+  const configJSON = fs.readFileSync(path.join(__dirname, "../../config.json"), "utf-8")
+  let log = counter.toString() + configJSON
+
+  fs.appendFile(logFilePath, log, (err) => {
+    if (err) {
+      console.error("Failed to write log:", err)
+    }
+  })
 }
 
-<<<<<<< Updated upstream
 async function entityAndIntentTest(testCasesArray: FullTestCase[]) {
   let callSignArray: CallsignObject[] = []
   testCasesArray.forEach((testCase) => {
     callSignArray.push(testCase.testCase.callsignObject)
   })
-=======
-async function entityAndIntentTest(testCasesArray: TestCase[]) {
-    let callSignArray: string[] = []
-    testCasesArray.forEach((testCase: TestCase) => {{
-        callSignArray.push(testCase.testCase.callsignObject.written)
-        callSignArray.push(testCase.testCase.callsignObject.usedCallsign)
-    }})
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
   for (const testCase of testCasesArray) {
     try {

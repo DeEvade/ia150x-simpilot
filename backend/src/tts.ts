@@ -63,7 +63,10 @@ const planeDisappearedFromTheInsideOfTheComputerizedSimulator = (plane : id) => 
 }
 */
 
-export const commandToSpeech = async (command: Command): Promise<TTSObject> => {
+export const commandToSpeech = async (command: Command, skipTTS?: boolean): Promise<TTSObject> => {
+  if (skipTTS) {
+    return { audio: null, pilotSentence: "testing testing" } as unknown as TTSObject
+  }
   const input = buildTTSPhrase(command) as string
   if (!input) {
     return clarifyCommand()
@@ -73,7 +76,10 @@ export const commandToSpeech = async (command: Command): Promise<TTSObject> => {
   return obj
 }
 
-export const clarifyCommand = async (): Promise<TTSObject> => {
+export const clarifyCommand = async (skipTTS?: boolean): Promise<TTSObject> => {
+  if (skipTTS) {
+    return { audio: null, pilotSentence: "testing testing" } as unknown as TTSObject
+  }
   const input = getRandomSentence(clarifyCommandSentence)
   const audio = await sendTTS(input)
   const obj: TTSObject = { audio: audio.toString("base64"), pilotSentence: input }

@@ -48,7 +48,7 @@ export const parseTranscribedText = async (
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ transcript, overrideCallsigns: callsignsArray }),
+      body: JSON.stringify({ transcript, overrideCallsigns: callsignsArray, skipTTS: true }),
     })
     if (!response.ok) {
       console.error("Failed to parse transcribed text:", response.statusText)
