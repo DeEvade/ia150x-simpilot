@@ -72,23 +72,22 @@ export const transcribeData = async (formData: FormData) => {
   }
 }
 const generateASRPrompt = async (overrideCallsigns?: string[]): Promise<string> => {
-  const callsigns: string[] = []
+  let callsigns: string[] = []
   let result = ""
-  if(overrideCallsigns){
-      callsigns = overrideCallsigns;
-  }
-  else{
-      let flightData = FlightDataStore.getInstance().getAllFlightData()
+  if (overrideCallsigns) {
+    callsigns = overrideCallsigns
+  } else {
+    let flightData = FlightDataStore.getInstance().getAllFlightData()
 
-      flightData.forEach((data: FlightData) => {
-          callsigns.push(data.callsign)
-          const threeLetters = data.callsign.slice(0, 3)
-          const callsign = callSigns.find((callsign: Callsign) => callsign.tlcs === threeLetters)
-          if (callsign) {
-              const phonetic = callsign.cs + " " + data.callsign.slice(3)
-              callsigns.push(phonetic)
-          }
-      })
+    flightData.forEach((data: FlightData) => {
+      callsigns.push(data.callsign)
+      const threeLetters = data.callsign.slice(0, 3)
+      const callsign = callSigns.find((callsign: Callsign) => callsign.tlcs === threeLetters)
+      if (callsign) {
+        const phonetic = callsign.cs + " " + data.callsign.slice(3)
+        callsigns.push(phonetic)
+      }
+    })
   }
   result += callsigns.toString()
   let i = 0
