@@ -1,11 +1,25 @@
 import { Request } from "express"
 import fs from "fs"
 import FlightDataStore from "./FlightDataStore"
-import { Callsign, FlightData } from "../interfaces"
+import { Callsign, CallsignObject, FlightData } from "../interfaces"
 import mongoose from "mongoose"
 import dotenv from "dotenv"
 import tiktoken, { get_encoding } from "@dqbd/tiktoken"
+import { callSignToNato } from "./string_processing"
 const encoding = get_encoding("cl100k_base")
+const trainingWaypointList = [
+  "GATKI",
+  "JEROM",
+  "KONKA",
+  "SKEAR",
+  "VIRGA",
+  "PELUP",
+  "ARN",
+  "BROMO",
+  "GÖTEBORG",
+] //Konstant nu. Bör parsas från narsim
+
+let waypointList: string[]
 
 dotenv.config()
 const configFile = fs.readFileSync("../config.json", "utf-8")
@@ -39,16 +53,17 @@ const initMongo = async () => {
   })
 }
 initMongo()
-export const transcribeData = async (formData: FormData) => {
+export const transcribeData = async (formData: FormData, overrideCallsigns: CallsignObject[]) => {
   try {
     formData.append("model", config.asr_model)
-    const prompt = generateASRPrompt()
-    //formData.append("prompt", prompt)
-    /*
-    for (const [key, value] of Object.entries(config.asr_parameters)) {
-        formData.append(key, value)
-    }
-    */
+    const prompt = (await generateASRPrompt(overrideCallsigns)).toString()
+    formData.append("prompt", prompt)
+
+    /*for (const [key, value] of Object.entries(config.asr_parameters)) {
+      const x = value as any
+      formData.append(key, x.toString())
+    }*/
+
     const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
       method: "POST",
       headers: {
@@ -71,29 +86,49 @@ export const transcribeData = async (formData: FormData) => {
     return { error: "Error processing audio" }
   }
 }
-const generateASRPrompt = async (overrideCallsigns?: string[]): Promise<string> => {
-  let callsigns: string[] = []
+const generateASRPrompt = async (overrideCallsigns?: CallsignObject[]): Promise<string> => {
   let result = ""
+  let flightData = FlightDataStore.getInstance().getAllFlightData()
+
+  let callsigns: Object[] = []
+  waypointList = []
+  //lägg in icao också
+  flightData.forEach((data: FlightData) => {
+    callsigns.push({
+      idCallsign: data.callsign,
+      phoneticCallsign: callSignToNato(data.callsign),
+      icaoCallsign: "",
+    })
+    //TODO Implement ICAOCallsing
+  })
   if (overrideCallsigns) {
     callsigns = overrideCallsigns
-  } else {
-    let flightData = FlightDataStore.getInstance().getAllFlightData()
-
-    flightData.forEach((data: FlightData) => {
-      callsigns.push(data.callsign)
-      const threeLetters = data.callsign.slice(0, 3)
-      const callsign = callSigns.find((callsign: Callsign) => callsign.tlcs === threeLetters)
-      if (callsign) {
-        const phonetic = callsign.cs + " " + data.callsign.slice(3)
-        callsigns.push(phonetic)
-      }
-    })
+    waypointList = trainingWaypointList
   }
-  result += callsigns.toString()
+
+  const callsignListString = `[${callsigns.map((x) => JSON.stringify(x))}]`
+
+  console.log("WaypointList sent to ASR: " + waypointList.toString())
+
+  result += callsignListString
+  result += "\n"
   let i = 0
   let lengthInToken = encoding.encode(result).length
   console.log("lengthInToken: ", lengthInToken)
-
+  //lägger först till waypoints
+  while (lengthInToken < maxTokenLength) {
+    const word = waypointList[i]
+    if (word === undefined) {
+      break
+    }
+    const lengthOfWordInToken = encoding.encode(word).length
+    if (lengthInToken + lengthOfWordInToken < maxTokenLength) {
+      result += ", " + word
+      lengthInToken += lengthOfWordInToken
+    }
+    i++
+  }
+  //lägger till vanliga ord
   while (lengthInToken < maxTokenLength) {
     const word = commonWords[i]
     if (word === undefined) {

@@ -19,7 +19,7 @@ interface TestCase {
   callsignObject: CallsignObject
   usedCallsign: string
   parameterPhonetic: string
-  parameter: number
+  parameter: number | string | null
   audio: string
   user: string
 }
@@ -49,17 +49,30 @@ const run = async () => {
         throw new Error("testcase null")
       }
 
-      let transcribedSentence = await transcribeText(testCase.audio)
-      testCasesArray.push({ testCase, transcribedSentence })
+      testCasesArray.push({ testCase, transcribedSentence: "" })
+    }
+    let callSignArray: CallsignObject[] = []
+    testCasesArray.forEach((testCase) => {
+      callSignArray.push(testCase.testCase.callsignObject)
+    })
+    for (const test of testCasesArray) {
+      const testCase = test.testCase
+      let transcribedSentence = await transcribeText(testCase.audio, callSignArray)
+      if (!transcribedSentence) {
+        console.error("Failed to transcribe audio")
+        continue
+      }
+      test.transcribedSentence = transcribedSentence
     }
     const scrambledArray = shuffleArray([...testCasesArray])
-    await entityAndIntentTest(scrambledArray)
+    await entityAndIntentTest(scrambledArray, callSignArray)
     console.log("wrong: ", counter)
     console.log("-------------------------------------------------------")
     console.log("-------------------------------------------------------")
   }
+
   const configJSON = fs.readFileSync(path.join(__dirname, "../../config.json"), "utf-8")
-  let log = counter.toString() + configJSON
+  let log = i.toString() + "\n\n\n" + counter.toString() + "\n\n\n" + configJSON
 
   fs.appendFile(logFilePath, log, (err) => {
     if (err) {
@@ -68,12 +81,10 @@ const run = async () => {
   })
 }
 
-async function entityAndIntentTest(testCasesArray: FullTestCase[]) {
-  let callSignArray: CallsignObject[] = []
-  testCasesArray.forEach((testCase) => {
-    callSignArray.push(testCase.testCase.callsignObject)
-  })
-
+async function entityAndIntentTest(
+  testCasesArray: FullTestCase[],
+  callSignArray: CallsignObject[],
+) {
   for (const testCase of testCasesArray) {
     try {
       let somethingWrong = false
@@ -87,7 +98,11 @@ async function entityAndIntentTest(testCasesArray: FullTestCase[]) {
       console.log("responseJSON", responseJSON)
 
       if (responseJSON) {
-        if (responseJSON.callSign != testCase.testCase.callsignObject.written) {
+        if (
+          !responseJSON?.callSign ||
+          responseJSON.callSign.toUpperCase() !=
+            testCase.testCase.callsignObject.written.toUpperCase()
+        ) {
           counter.callsignCounter++
           somethingWrong = true
           console.log(
@@ -107,6 +122,10 @@ async function entityAndIntentTest(testCasesArray: FullTestCase[]) {
         }
         let realParameter = testCase.testCase.parameter
         let generatedParameter = responseJSON.parameter
+        if (typeof realParameter === "string" && typeof generatedParameter === "string") {
+          realParameter = realParameter.toUpperCase()
+          generatedParameter = generatedParameter.toUpperCase()
+        }
         if (generatedParameter != realParameter) {
           console.log("expected: " + realParameter + " got " + generatedParameter)
           console.log("the full sentence was: " + testCase.testCase.sentence)

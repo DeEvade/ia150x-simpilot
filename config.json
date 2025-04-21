@@ -1,9 +1,8 @@
 {
   "asr_model": "gpt-4o-transcribe",
   "asr_parameters": {
-      "temperature": 0,
-      "language": "en",
-      "include": ["logprobs"]
+    "temperature": 0,
+    "language": "en"
   },
   "nlu_model": "gpt-4o-mini",
   "nlu_parameters": {

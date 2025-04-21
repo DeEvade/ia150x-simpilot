@@ -2,7 +2,7 @@ import { CallsignObject } from "./interfaces"
 
 const backend = "http://localhost:8080"
 
-export const transcribeText = async (base64Audio: string) => {
+export const transcribeText = async (base64Audio: string, overrideCallsigns: CallsignObject[]) => {
   console.log("Processing base64 audio...")
 
   // Convert base64 to a Blob
@@ -17,6 +17,7 @@ export const transcribeText = async (base64Audio: string) => {
   const formData = new FormData()
   formData.append("file", audioBlob, "audio.webm")
   formData.append("model", "whisper-1")
+  formData.append("overrideCallsigns", JSON.stringify(overrideCallsigns))
 
   try {
     const response = await fetch(`${backend}/processAudio`, {

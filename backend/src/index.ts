@@ -53,15 +53,16 @@ app.post(
       const audioFilePath = req.file.path
       const audioBuffer = fs.readFileSync(audioFilePath)
       const audioBlob = new Blob([audioBuffer], { type: "audio/wav" })
+      const overrideCallsigns: CallsignObject[] = JSON.parse(req.body.overrideCallsigns || "[]")
 
       const formData = new FormData()
       formData.append("file", audioBlob, req.file.originalname)
-      const response = await transcribeData(formData)
+      const response = await transcribeData(formData, overrideCallsigns)
 
       if (response.error) {
         const error = response.error
         console.error("Failed to transcribe audio:", error)
-        res.status(response.status).json({ error })
+        res.status(500).json({ error })
       } else {
         console.log("Transcription result:", response)
 
@@ -80,22 +81,26 @@ app.post(
 )
 
 app.post("/processTranscription", async (req: Request, res: Response) => {
-  let tmp = ""
   try {
     console.log("Processing transcription...", req.body.transcript)
     const transcript = req.body.transcript
     const skipTTS = req.body.skipTTS
     const overrideCallsigns: CallsignObject[] = req.body.overrideCallsigns
     const processedTranscript = await processTranscription(transcript, overrideCallsigns)
-    const tmp = processedTranscript
 
     if (processedTranscript === null) {
       res.json({ error: "could not process transcription" })
       return
     }
-    console.log("flightcatastore", FlightDataStore.getInstance().getAllFlightData())
-
-    let parsedTranscript = JSON.parse(processedTranscript) as Command
+    //console.log("flightcatastore", FlightDataStore.getInstance().getAllFlightData())
+    let parsedTranscript
+    try {
+      parsedTranscript = JSON.parse(processedTranscript) as Command
+    } catch (error) {
+      console.log("Error parsing JSON:", error)
+      console.log("Processed transcript that had error:", processedTranscript)
+      throw error
+    }
     const parsedAction = parseAction(parsedTranscript.action)
 
     if (overrideCallsigns) {
@@ -136,8 +141,6 @@ app.post("/processTranscription", async (req: Request, res: Response) => {
       pilotSentence: ttsResult?.pilotSentence,
     })
   } catch (error) {
-    console.log("Input data from error:", req.body, tmp)
-
     console.log("Error processing transcription:", error)
     res.status(500).json({ error: "Error processing transcription" })
   }

@@ -6,6 +6,18 @@ import { configDotenv } from "dotenv"
 configDotenv()
 const apiKey = process.env.OPENAI_KEY
 const openai = new OpenAI()
+const trainingWaypointList = [
+  "GATKI",
+  "JEROM",
+  "KONKA",
+  "SKEAR",
+  "VIRGA",
+  "PELUP",
+  "ARN",
+  "BROMO",
+  "GÖTEBORG",
+]
+let waypointList: string[]
 
 export const processTranscription = async (
   transcript: string,
@@ -38,6 +50,7 @@ export const processTranscription = async (
 const getTranscribeSystemPrompt = (overrideCallsigns?: CallsignObject[]) => {
   let flightData = FlightDataStore.getInstance().getAllFlightData()
   let callsigns: Object[] = []
+  waypointList = []
   //lägg in icao också
   flightData.forEach((data: FlightData) => {
     callsigns.push({
@@ -48,28 +61,17 @@ const getTranscribeSystemPrompt = (overrideCallsigns?: CallsignObject[]) => {
   })
   if (overrideCallsigns) {
     callsigns = overrideCallsigns
+    waypointList = trainingWaypointList
   }
-  console.log("callsigns", callsigns)
+  console.log("WaypointList sent to NLU: " + waypointList.toString())
+  //console.log("callsigns", callsigns)
 
   //Kanske borde para ihop alla callsignsigns, t ex [{SAS123, Sierra alpha sierra one two three, Scandinavian 123}, {UAL321, Uniform alpha lima three two one, United 321}]
   //och sedan säga att om den hör en av de så ta den som är längst till vänster
   return `
 # Identity
-<<<<<<< Updated upstream
-=======
 
 You are tasked to extract information from an ATC (Air Traffic Controller) command, as well as a list of available callsigns. 
-
-# Instructions
-
-You will be given the following:
-* A transcribed ATC (Air traffic Controller) command. The command will consist of a callsign, an action and a parameter. 
-* A list of possible callsigns .
-
-Your task is to use the transcription
->>>>>>> Stashed changes
-
-You are tasked to extract information from an ATC (Air Traffic Controller) commandi. 
 
 # Instructions
 
@@ -102,11 +104,12 @@ Your task is to use the transcription to extract the command's callsign, action 
     The value associated with the action. The type of value differs between actions. 
     The following actions are associated with number values: 
         ["cleared airspeed", "cleared mach", "cleared flight level", "cleared altitude", "cleared heading"]
-    The folloing action is associated with a name:
-        ["cleared direct"]
     The following actions do not have any value and are always null:
         ["cancel heading", "cancel speed"]
-
+    The folloing action is associated with a name:
+        ["cleared direct"]
+    The name associated with "cleared direct" should be one of the following:
+        [${waypointList.toString()}]
 # Examples
 
 Given the following fake CallSignList:
@@ -119,9 +122,9 @@ Echo Whiskey Golf One Bravo Golf Cleared to Flight Level Ninety.
 
 <assistant_response>
 {
-	callSign: “EWG1BG”,
-	action: “cleared flight level”,
-	parameter: 90
+	"callSign": “EWG1BG”,
+	"action": “cleared flight level”,
+	"parameter": 90
 }
 </assistant_response>
 
@@ -132,9 +135,9 @@ Sierra alpha sierra One Six Niner turn right to zero six seven.
 
 <assistant_response>
 {
-	callSign: “SAS169”,
-	action: “cleared heading”,
-	parameter: 67
+	"callSign": “SAS169”,
+	"action": “cleared heading”,
+	"parameter": 67
 }
 </assistant_response>
 
@@ -144,9 +147,9 @@ Ryanair two two one maintain speed not less than mach decimal six eight.
 
 <assistant_response>
 {
-	callSign: “RYA221”,
-	action: “cleared mach”,
-	parameter: 0.68
+	"callSign": “RYA221”,
+	"action": “cleared mach”,
+	"parameter": 0.68
 }
 </assistant_response>
 
@@ -156,21 +159,21 @@ Ryanair two two one resume normal speed when able.
 
 <assistant_response>
 {
-	callSign: “RYA221”,
-	action: “cancel speed”,
-	parameter: null
+	"callSign": “RYA221”,
+	"action": “cancel speed”,
+	"parameter": null
 }
 </assistant_response>
 
 <user_query>
-Sierra alpha sierra One Six neon torn lift to one niner nine.
+Sierra alpha sierra One Six niner torn lift to one niner niner.
 </user_query>
 
 <assistant_response>
 {
-	callSign: “SAS169”,
-	action: “cleared heading”,
-	parameter: 199
+	"callSign": “SAS169”,
+	"action": “cleared heading”,
+	"parameter": 199
 }
 </assistant_response>
 
@@ -180,11 +183,36 @@ Pioneer damp, increase speed to five hundred knots.
 
 <assistant_response>
 {
-	callSign: null,
-	action: “cleared speed”,
-	parameter: 500
+	"callSign": null,
+	"action": “cleared speed”,
+	"parameter": 500
 }
 </assistant_response>
+
+<user_query>
+Sierra alpha sierra One Six niner, reduce speed to two five zero knots.
+</user_query>
+
+<assistant_response>
+{
+  "callSign": “SAS169”,
+  "action": “cleared airspeed”,
+  "parameter": 250
+}
+</assistant_response>
+
+<user_query>
+Sierra alpha sierra One Six niner, increase speed to three five zero knots.
+</user_query>
+
+<assistant_response>
+{
+  "callSign": “SAS169”,
+  "action": “cleared airspeed”,
+  "parameter": 350
+}
+
+
 
 return a JSON object
 `

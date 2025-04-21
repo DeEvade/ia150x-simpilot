@@ -2,7 +2,7 @@ export interface Command {
   callSign: string
   action: string
   parsedAction: Action
-  parameter: number
+  parameter: number | string | null
   error?: string
 }
 
