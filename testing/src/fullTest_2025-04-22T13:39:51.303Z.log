@@ -1,0 +1,81 @@
+
+          ----------------------------------
+          !!!ERROR!!!
+          User: william
+          Facit: QATARI Zero Two Zero, turn right heading Zero Zero One
+          Transcribed: QATARI Zero Two Zero, turn right heading zero zero one 
+          ResponseJSON: {"callSign":"QTR020","action":"cleared heading","parameter":1}
+          ----------------------------------
+          
+          ----------------------------------
+          !!!ERROR!!!
+          User: william
+          Facit: HOLDING GROUP One Three Niner, cleared heading Two Four One
+          Transcribed: [HOLDING GROUP One Three Niner, 
+          ResponseJSON: {"callSign":"HIN139","action":null,"parameter":null}
+          ----------------------------------
+          
+          ----------------------------------
+          !!!ERROR!!!
+          User: william
+          Facit: TUI JET Eight Zero Zero, turn left heading Two Eight Zero
+          Transcribed: TUI JET Eight Zero Zero. 
+          ResponseJSON: {"callSign":"TUI800","action":null,"parameter":null}
+          ----------------------------------
+          
+          ----------------------------------
+          !!!ERROR!!!
+          User: william
+          Facit: SCANDINAVIAN Four Five Niner, maintain speed not less than Two Five Zero knots
+          Transcribed: Scandinavian four five niner maintain speed not less than two five zero knots. 
+          ResponseJSON: {"callSign":"SAS459","action":"cancel speed","parameter":null}
+          ----------------------------------
+          
+          ----------------------------------
+          !!!ERROR!!!
+          User: william
+          Facit: Sierra Whiskey Romeo Six Three Eight, cleared heading One Niner Two
+          Transcribed: Sierra Whiskey Romeo Six cleared heading One Niner 
+          ResponseJSON: {"callSign":"SWR638","action":"cleared heading","parameter":19}
+          ----------------------------------
+          
+          ----------------------------------
+          !!!ERROR!!!
+          User: Aron
+          Facit: FINNAIR Four Five Seven, maintain speed not less than Two Five Zero knots
+          Transcribed: Finnair four five seven, maintain speed not less than two five zero knots. 
+          ResponseJSON: {"callSign":"FIN457","action":"cancel speed","parameter":null}
+          ----------------------------------
+          
+          ----------------------------------
+          !!!ERROR!!!
+          User: Aron
+          Facit: Delta Lima Hotel Seven Niner Two, reduce to Two Niner Zero knots
+          Transcribed: Lufthansa 792 reduce to two niner zero 
+          ResponseJSON: {"callSign":"DLH792","action":"cleared altitude","parameter":290}
+          ----------------------------------
+          
+          ----------------------------------
+          !!!ERROR!!!
+          User: Aron
+          Facit: SANTOS Zero One One, cancel heading. 
+          Transcribed: SANTOS Zero One One cancel landing 
+          ResponseJSON: {"callSign":"SDU011","action":null,"parameter":null}
+          ----------------------------------
+          
+          ----------------------------------
+          !!!ERROR!!!
+          User: Aron
+          Facit: ASERTEC Two Eight Four, maintain Three Three Zero knots
+          Transcribed: ASERTEC Two Eight Four maintaining three three zero knots 
+          ResponseJSON: {"callSign":"ASE284","action":null,"parameter":null}
+          ----------------------------------
+          
+          ----------------------------------
+          !!!ERROR!!!
+          User: Aron
+          Facit: LOT Three Two One, maintain Mach decimal Eight Two
+          Transcribed: LOT Three Two One 
+          ResponseJSON: {"callSign":"LOT321","action":null,"parameter":null}
+          ----------------------------------
+          

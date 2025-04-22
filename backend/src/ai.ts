@@ -25,7 +25,7 @@ export const processTranscription = async (
 ) => {
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4.1-mini",
       temperature: 0,
 
       messages: [
@@ -113,7 +113,7 @@ Your task is to use the transcription to extract the command's callsign, action 
 # Examples
 
 Given the following fake CallSignList:
-CallSignList: [ {written: "EWG1BG", spoken: "Echo Whiskey Golf One Bravo Golf", phonetic: "EUROWINGS One Bravo Golf" }, {written: "SAS169", spoken: "Sierra alpha sierra One Six Niner", phonetic: "Scandinavian One Six Niner"}, {written: "SAS966", spoken: "Sierra alpha sierra Niner Six Six  ", phonetic: "Scandinavian Niner Six Six"}, {written: "RYA221", spoken: "Romeo yankee alpha two two one", phonetic: "Ryanair two two one"} ]
+CallSignList: [ {written: "EWG1BG", spoken: "Echo Whiskey Golf One Bravo Golf", phonetic: "EUROWINGS One Bravo Golf" }, {written: "SAS169", spoken: "Sierra alpha sierra One Six Niner", phonetic: "Scandinavian One Six Niner"}, {written: "SAS966", spoken: "Sierra alpha sierra Niner Six Six  ", phonetic: "Scandinavian Niner Six Six"}, {written: "RYA221", spoken: "Romeo yankee alpha two two one", phonetic: "Ryanair two two one"}, {written: "DLH665", spoken: "Delta lima hotel six six five", phonetic: "Lufthansa six six five"} ]
 
 
 <user_query>
@@ -212,7 +212,28 @@ Sierra alpha sierra One Six niner, increase speed to three five zero knots.
   "parameter": 350
 }
 
+<user_query>
+Ryanair two two one, maintain four six zero knots.
+</user_query>
 
+<assistant_response>
+{
+  "callSign": “RYA221”,
+  "action": “cleared airspeed”,
+  "parameter": 460
+}
+
+<user_query>
+Lufthansa six six five maintain speed not less than three five five knots.
+</user_query>
+
+<assistant_response>
+{
+	"callSign": “DLH665”,
+	"action": “cleared speed”,
+	"parameter": 355
+}
+</assistant_response>
 
 return a JSON object
 `

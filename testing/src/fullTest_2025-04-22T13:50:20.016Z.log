@@ -1,0 +1,33 @@
+
+          ----------------------------------
+          !!!ERROR!!!
+          User: william
+          Facit: Lima Golf Lima Seven Zero Six, cancel heading. 
+          Transcribed: Lima Golf Lima seven zero six cancellation. 
+          ResponseJSON: {"callSign":"LGL706","action":"cancel speed","parameter":null}
+          ----------------------------------
+          
+          ----------------------------------
+          !!!ERROR!!!
+          User: william
+          Facit: QATARI Zero Two Zero, turn right heading Zero Zero One
+          Transcribed: QATARI Zero Two Zero, turn right heading zero zero one. 
+          ResponseJSON: {"callSign":"QTR020","action":"cleared heading","parameter":1}
+          ----------------------------------
+          100
+
+
+[object Object]
+
+
+{
+  "asr_model": "gpt-4o-transcribe",
+  "asr_parameters": {
+    "temperature": 0,
+    "language": "en"
+  },
+  "nlu_model": "gpt-4o-mini",
+  "nlu_parameters": {
+    "temperature": 0
+  }
+}

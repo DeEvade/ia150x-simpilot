@@ -26,7 +26,17 @@ const configFile = fs.readFileSync("../config.json", "utf-8")
 const config = JSON.parse(configFile)
 const maxTokenLength = 224
 
-const commonWords = ["cleared", "mach", "decimal", "level", "climb", "maintain", "descend"]
+const commonWords = [
+  "heading",
+  "cleared",
+  "mach",
+  "decimal",
+  "flight",
+  "level",
+  "climb",
+  "maintain",
+  "descend",
+]
 
 console.log("config is: ", configFile)
 const callSigns: Callsign[] = []
@@ -59,10 +69,10 @@ export const transcribeData = async (formData: FormData, overrideCallsigns: Call
     const prompt = (await generateASRPrompt(overrideCallsigns)).toString()
     formData.append("prompt", prompt)
 
-    /*for (const [key, value] of Object.entries(config.asr_parameters)) {
+    for (const [key, value] of Object.entries(config.asr_parameters)) {
       const x = value as any
       formData.append(key, x.toString())
-    }*/
+    }
 
     const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
       method: "POST",
@@ -90,31 +100,31 @@ const generateASRPrompt = async (overrideCallsigns?: CallsignObject[]): Promise<
   let result = ""
   let flightData = FlightDataStore.getInstance().getAllFlightData()
 
-  let callsigns: Object[] = []
+  let callsigns: CallsignObject[] = []
   waypointList = []
   //lägg in icao också
   flightData.forEach((data: FlightData) => {
     callsigns.push({
-      idCallsign: data.callsign,
-      phoneticCallsign: callSignToNato(data.callsign),
-      icaoCallsign: "",
+      written: data.callsign,
+      phonetic: "",
+      spoken: callSignToNato(data.callsign),
     })
     //TODO Implement ICAOCallsing
   })
-  if (overrideCallsigns) {
+  if (overrideCallsigns && overrideCallsigns.length > 0) {
     callsigns = overrideCallsigns
     waypointList = trainingWaypointList
   }
 
-  const callsignListString = `[${callsigns.map((x) => JSON.stringify(x))}]`
+  //console.log("WaypointList sent to NLU: " + waypointList.toString())
 
-  console.log("WaypointList sent to ASR: " + waypointList.toString())
+  const callsignListString = `[${callsigns.map((x) => x.phonetic)}]`
+  //console.log("callsignListString: ", callsigns)
 
   result += callsignListString
   result += "\n"
   let i = 0
   let lengthInToken = encoding.encode(result).length
-  console.log("lengthInToken: ", lengthInToken)
   //lägger först till waypoints
   while (lengthInToken < maxTokenLength) {
     const word = waypointList[i]
@@ -141,7 +151,8 @@ const generateASRPrompt = async (overrideCallsigns?: CallsignObject[]): Promise<
     }
     i++
   }
-
+  console.log("lengthInToken: ", lengthInToken)
+  console.log("ASR PROMPT result: ", result)
   //console.log(result)
   return result
 }

@@ -6,12 +6,13 @@ import * as fs from "fs"
 import * as path from "path"
 const uri = "mongodb://vm.cloud.cbh.kth.se:20136/"
 const batchSize = 5
-const testSize = 50 //  change according to size of testing collection
+//const testSize = 50 //  change according to size of testing collection
 let callsignCounter = 0
 let actionCounter = 0
 let parameterCounter = 0
 let totalCounter = 0
 const counter = { totalCounter, callsignCounter, actionCounter, parameterCounter }
+const dateString = new Date().toISOString()
 
 interface TestCase {
   sentence: string
@@ -29,10 +30,9 @@ interface FullTestCase {
   transcribedSentence: string
 }
 const client = new MongoClient(uri)
+const logFilePath = path.join(__dirname, "fullTest_" + dateString + ".log")
 
 const run = async () => {
-  const logFilePath = path.join(__dirname, "fullTest.log")
-
   await client.connect()
   console.log("Connected to MongoDB!")
   const dbo = client.db("main")
@@ -41,12 +41,15 @@ const run = async () => {
   console.log(testSize)
 
   let i = 0
-  while (i - batchSize < testSize) {
+  let breakWhileLoop = false
+  while (!breakWhileLoop) {
     const testCasesArray: FullTestCase[] = []
     for (let j = 0; j < batchSize; j++, i++) {
       let testCase = (await collection.find().skip(i).limit(1).next()) as unknown as TestCase
       if (!testCase) {
-        throw new Error("testcase null")
+        console.log("No more documents to process.")
+        breakWhileLoop = true
+        break
       }
 
       testCasesArray.push({ testCase, transcribedSentence: "" })
@@ -72,7 +75,13 @@ const run = async () => {
   }
 
   const configJSON = fs.readFileSync(path.join(__dirname, "../../config.json"), "utf-8")
-  let log = i.toString() + "\n\n\n" + counter.toString() + "\n\n\n" + configJSON
+  let log = `
+  
+  ${i.toString()} 
+  
+  ${JSON.stringify(counter)}} -> error rate = ${(counter.totalCounter / testSize) * 100}%
+  
+  ${configJSON}`
 
   fs.appendFile(logFilePath, log, (err) => {
     if (err) {
@@ -97,6 +106,8 @@ async function entityAndIntentTest(
       let responseJSON = JSON.parse(response.processedTranscript) as Command
       console.log("responseJSON", responseJSON)
 
+      const errors = []
+
       if (responseJSON) {
         if (
           !responseJSON?.callSign ||
@@ -105,20 +116,16 @@ async function entityAndIntentTest(
         ) {
           counter.callsignCounter++
           somethingWrong = true
-          console.log(
-            "expected: " +
-              testCase.testCase.callsignObject.written +
-              " got " +
-              responseJSON.callSign,
+          errors.push(
+            `callsign expected: ${testCase.testCase.callsignObject.written} got: ${responseJSON.callSign}`,
           )
-          console.log("the full sentence was: " + testCase.testCase.sentence)
+          // console.log("the full sentence was: " + testCase.testCase.sentence)
         }
 
         if (responseJSON.action != testCase.testCase.action) {
           counter.actionCounter++
           somethingWrong = true
-          console.log("expected: " + testCase.testCase.action + " got " + responseJSON.action)
-          console.log("the full sentence was: " + testCase.testCase.sentence)
+          errors.push(`action expected: ${testCase.testCase.action} got: ${responseJSON.action}`)
         }
         let realParameter = testCase.testCase.parameter
         let generatedParameter = responseJSON.parameter
@@ -127,13 +134,25 @@ async function entityAndIntentTest(
           generatedParameter = generatedParameter.toUpperCase()
         }
         if (generatedParameter != realParameter) {
-          console.log("expected: " + realParameter + " got " + generatedParameter)
-          console.log("the full sentence was: " + testCase.testCase.sentence)
+          errors.push(`parameter expected: ${realParameter} got: ${generatedParameter}`)
           counter.parameterCounter++
           somethingWrong = true
         }
       }
       if (somethingWrong) {
+        fs.appendFile(
+          logFilePath,
+          `
+          ----------------------------------
+          Transcribed: ${testCase.transcribedSentence} 
+          Facit: ${testCase.testCase.sentence}
+          `,
+          (err) => {
+            if (err) {
+              console.error("Failed to write log:", err)
+            }
+          },
+        )
         counter.totalCounter++
       }
     } catch (error) {
