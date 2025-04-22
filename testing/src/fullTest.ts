@@ -30,7 +30,7 @@ interface FullTestCase {
   transcribedSentence: string
 }
 const client = new MongoClient(uri)
-const logFilePath = path.join(__dirname, "fullTest_" + dateString + ".log")
+const logFilePath = path.join(__dirname + "/tests/", "fullTest_" + dateString + ".log")
 
 const run = async () => {
   await client.connect()
@@ -140,12 +140,22 @@ async function entityAndIntentTest(
         }
       }
       if (somethingWrong) {
+        const errorLog = `
+----------------------------------
+User: ${testCase.testCase.user}
+Facit: ${testCase.testCase.sentence}
+Transcribed: ${testCase.transcribedSentence} 
+ResponseJSON: ${JSON.stringify(responseJSON)}
+Errors: ${errors.join(", ")}
+----------------------------------
+`
+        console.log(errorLog)
+
         fs.appendFile(
           logFilePath,
           `
-          ----------------------------------
-          Transcribed: ${testCase.transcribedSentence} 
-          Facit: ${testCase.testCase.sentence}
+
+
           `,
           (err) => {
             if (err) {
