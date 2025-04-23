@@ -6,6 +6,7 @@ import mongoose from "mongoose"
 import dotenv from "dotenv"
 import tiktoken, { get_encoding } from "@dqbd/tiktoken"
 import { callSignToNato } from "./string_processing"
+import { ActionTypes } from "./utils"
 const encoding = get_encoding("cl100k_base")
 const trainingWaypointList = [
   "GATKI",
@@ -17,7 +18,7 @@ const trainingWaypointList = [
   "ARN",
   "BROMO",
   "GÖTEBORG",
-] //Konstant nu. Bör parsas från narsim
+] //Konstant nu. Bör parsas från NARSIM
 
 let waypointList: string[]
 
@@ -27,6 +28,16 @@ const config = JSON.parse(configFile)
 const maxTokenLength = 224
 
 const commonWords = [
+  "zero",
+  "one",
+  "two",
+  "three",
+  "four",
+  "five",
+  "six",
+  "seven",
+  "eight",
+  "niner",
   "heading",
   "cleared",
   "mach",
@@ -68,13 +79,15 @@ export const transcribeData = async (formData: FormData, overrideCallsigns: Call
     formData.append("model", config.asr_model)
     const prompt = (await generateASRPrompt(overrideCallsigns)).toString()
     formData.append("prompt", prompt)
-
+    /*
     for (const [key, value] of Object.entries(config.asr_parameters)) {
       const x = value as any
       formData.append(key, x.toString())
-    }
-
-    const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+    }*/
+    formData.append("language", "en")
+    formData.append("temperature", "0")
+    const oldUrl = "https://api.openai.com/v1/audio/transcription"
+    const response = await fetch("http://localhost:8000/v1/audio/transcriptions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
@@ -115,14 +128,24 @@ const generateASRPrompt = async (overrideCallsigns?: CallsignObject[]): Promise<
     callsigns = overrideCallsigns
     waypointList = trainingWaypointList
   }
+  const actionList: string[] = []
+  Object.values(ActionTypes).forEach((actionType) => {
+    actionList.push(actionType)
+  })
 
   //console.log("WaypointList sent to NLU: " + waypointList.toString())
-
-  const callsignListString = `[${callsigns.map((x) => x.phonetic)}]`
+  const callsignStrings = callsigns.map((callsign) => {
+    let callsignArray = callsign.phonetic.split(" ")
+    for (let i = 0; i < 3; i++) {
+      //callsignArray.pop()
+    }
+    const callsignString = callsignArray.join(" ")
+    return callsignString
+  })
   //console.log("callsignListString: ", callsigns)
 
-  result += callsignListString
-  result += "\n"
+  result += callsignStrings.join(", ")
+  result += ", " + actionList.join(", ")
   let i = 0
   let lengthInToken = encoding.encode(result).length
   //lägger först till waypoints
