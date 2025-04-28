@@ -151,18 +151,11 @@ Errors: ${errors.join(", ")}
 `
         console.log(errorLog)
 
-        fs.appendFile(
-          logFilePath,
-          `
-
-
-          `,
-          (err) => {
-            if (err) {
-              console.error("Failed to write log:", err)
-            }
-          },
-        )
+        fs.appendFile(logFilePath, errorLog, (err) => {
+          if (err) {
+            console.error("Failed to write log:", err)
+          }
+        })
         counter.totalCounter++
       }
     } catch (error) {

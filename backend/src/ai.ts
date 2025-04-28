@@ -3,6 +3,7 @@ import FlightDataStore from "./FlightDataStore"
 import { CallsignObject, FlightData } from "../interfaces"
 import { callSignToNato } from "./string_processing"
 import { configDotenv } from "dotenv"
+import fs from "fs"
 configDotenv()
 const apiKey = process.env.OPENAI_KEY
 const openai = new OpenAI()
@@ -18,15 +19,19 @@ const trainingWaypointList = [
   "GÖTEBORG",
 ]
 let waypointList: string[]
-
+const configFile = fs.readFileSync("../config.json", "utf-8")
+const config = JSON.parse(configFile)
 export const processTranscription = async (
   transcript: string,
   overrideCallsigns?: CallsignObject[],
 ) => {
+  console.log("config", config)
+
+  const params = config.nlu_parameters
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",
-      temperature: 0,
+      model: config.nlu_model,
+      temperature: params.temperature,
 
       messages: [
         { role: "system", content: getTranscribeSystemPrompt(overrideCallsigns) },
