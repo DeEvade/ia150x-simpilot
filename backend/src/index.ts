@@ -52,7 +52,9 @@ app.post(
     try {
       const audioFilePath = req.file.path
       const audioBuffer = fs.readFileSync(audioFilePath)
-      const audioBlob = new Blob([audioBuffer], { type: "audio/wav" })
+      const audioFormat = req.file.mimetype
+
+      const audioBlob = new Blob([audioBuffer], { type: "audio/webm" })
       const overrideCallsigns: CallsignObject[] = JSON.parse(req.body.overrideCallsigns || "[]")
 
       const formData = new FormData()

@@ -6,7 +6,7 @@ import { configDotenv } from "dotenv"
 import fs from "fs"
 configDotenv()
 const apiKey = process.env.OPENAI_KEY
-const openai = new OpenAI()
+const openai = new OpenAI({ baseURL: "http://localhost:1234/v1", apiKey: apiKey })
 const trainingWaypointList = [
   "GATKI",
   "JEROM",
@@ -43,7 +43,10 @@ export const processTranscription = async (
       store: true,
     })
 
-    const result = completion.choices[0].message.content
+    let result = completion.choices[0].message.content
+    if (result?.startsWith("<think>")) {
+      result = result.split("</think>")[1]
+    }
     console.log(result)
     return result
   } catch (error: unknown) {

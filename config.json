@@ -1,10 +1,10 @@
 {
-  "asr_model": "gpt-4o-transcribe",
+  "asr_model": "whisper-small-finetuned2",
   "asr_parameters": {
     "temperature": 0,
     "language": "en"
   },
-  "nlu_model": "gpt-4.1-mini",
+  "nlu_model": "qwen3-1.7b",
   "nlu_parameters": {
     "temperature": 0
   }
