@@ -12,7 +12,6 @@ let actionCounter = 0
 let parameterCounter = 0
 let totalCounter = 0
 const counter = { totalCounter, callsignCounter, actionCounter, parameterCounter }
-const dateString = new Date().toISOString()
 
 interface TestCase {
   sentence: string
@@ -30,6 +29,8 @@ interface FullTestCase {
   transcribedSentence: string
 }
 const client = new MongoClient(uri)
+const dateString = new Date().toISOString().replace(/:/g, "-").replace(/\..+/, "")
+
 const logFilePath = path.join(__dirname + "/tests/", "fullTest_" + dateString + ".log")
 
 const run = async () => {
@@ -81,7 +82,8 @@ const run = async () => {
   
   ${JSON.stringify(counter)}} -> error rate = ${(counter.totalCounter / testSize) * 100}%
   
-  ${configJSON}`
+  ${configJSON}
+  `
 
   fs.appendFile(logFilePath, log, (err) => {
     if (err) {
@@ -101,7 +103,6 @@ async function entityAndIntentTest(
       if (!response) {
         continue
       }
-      //console.log("response4123", response)
 
       let responseJSON = JSON.parse(response.processedTranscript) as Command
       console.log("responseJSON", responseJSON)
@@ -150,6 +151,8 @@ Errors: ${errors.join(", ")}
 ----------------------------------
 `
         console.log(errorLog)
+        const dir = path.dirname(logFilePath)
+        fs.mkdirSync(dir, { recursive: true })
 
         fs.appendFile(logFilePath, errorLog, (err) => {
           if (err) {

@@ -1,5 +1,6 @@
 import { MongoClient, ServerApiVersion } from "mongodb"
 import { numberToString2 } from "./string_processing"
+import { transcribeText } from "./utils"
 const uri = "mongodb://vm.cloud.cbh.kth.se:20136/"
 const whisperURI = "http://localhost:8080"
 const testSize = 100 //  change according to size of testing collection
@@ -22,11 +23,12 @@ const run = async () => {
     let realSentence = JSON.stringify(testCase.sentence)
     realSentence = realSentence.replace(/"/g, "")
 
-    let transcribedSentence = await transcribeText(testCase.audio)
+    let transcribedSentence = await transcribeText(testCase.audio, [])
     transcribedSentence = processTranscription(transcribedSentence)
     console.log("-------------------------------------------------------")
     console.log("-------------------------------------------------------")
-    // console.log("Real spoken sentence: ")
+    console.log("Real spoken sentence: ", realSentence)
+    console.log("Transcribed sentence: ", transcribedSentence)
     // console.log(realSentence) // Logs the retrieved document
     // console.log("Transcription of spoken sentence: ")
     // console.log(transcribedSentence)
@@ -44,47 +46,11 @@ const run = async () => {
   await client.close()
 }
 
-export const transcribeText = async (base64Audio: string) => {
-  console.log("Processing base64 audio...")
-
-  // Convert base64 to a Blob
-  const byteCharacters = atob(base64Audio) // Decode base64
-  const byteNumbers = new Uint8Array(byteCharacters.length)
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i)
-  }
-  const audioBlob = new Blob([byteNumbers], { type: "audio/webm" })
-
-  // Prepare FormData
-  const formData = new FormData()
-  formData.append("file", audioBlob, "audio.webm")
-  formData.append("model", "whisper-1")
-
-  try {
-    const response = await fetch(`${whisperURI}/processAudio`, {
-      method: "POST",
-      body: formData,
-    })
-
-    if (!response.ok) {
-      console.log("response: ", response)
-      console.error("Failed to transcribe audio:", response.statusText)
-      return null
-    }
-
-    const data = await response.json()
-    return data.text
-  } catch (error: unknown) {
-    console.error("Error transcribing audio:", error)
-    return null
-  }
-}
-
 function processTranscription(transcribedSentence: string): string {
   //replace all , . - with nothing
   transcribedSentence = transcribedSentence.replace(/[.,-]/g, "")
   let processed = numberToString2(transcribedSentence)
-  console.log("processed is: ", processed)
+  //console.log("processed is: ", processed)
 
   return processed
 }
