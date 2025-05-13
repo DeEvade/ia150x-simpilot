@@ -2,6 +2,8 @@
 **/node_modules
 **/build
 **/package-lock.json
+**/__pycache__
+
 
 model/*
 
@@ -11,3 +13,10 @@ backend/uploads
 
 testing/src/tests
 training/openai
+training/dataset
+training/nlu_dataset
+
+
+zConverter/merged-model
+zConverter/llama.cpp
+zConverter

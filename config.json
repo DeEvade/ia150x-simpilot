@@ -1,10 +1,11 @@
 {
   "asr_model": "whisper-small-finetuned2",
+  "is_local": true,
   "asr_parameters": {
     "temperature": 0,
     "language": "en"
   },
-  "nlu_model": "qwen3-1.7b",
+  "nlu_model": "deepseek-v2-lite-chat-finetuned",
   "nlu_parameters": {
     "temperature": 0
   }

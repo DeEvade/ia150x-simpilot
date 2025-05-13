@@ -160,6 +160,10 @@ except Exception as e:
     exit()
 dataset = dataset.map(preprocess)
 
+#save dataset to disk
+dataset.save_to_disk("dataset")
+
+
 outdir = f"./{model_name}-finetuned2"
 
 # Training args

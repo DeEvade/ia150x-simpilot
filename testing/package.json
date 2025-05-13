@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "fullTest": "ts-node src/fullTest.ts",
+    "asrTest": "ts-node src/asrTest.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

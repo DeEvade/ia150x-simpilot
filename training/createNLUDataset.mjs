@@ -1,13 +1,6 @@
-import OpenAI from "openai"
-import FlightDataStore from "./FlightDataStore"
-import { CallsignObject, FlightData } from "../interfaces"
-import { callSignToNato } from "./string_processing"
-import { configDotenv } from "dotenv"
+import pkg from "parquetjs-lite"
+const { ParquetWriter, ParquetSchema } = pkg
 import fs from "fs"
-configDotenv()
-const apiKey = process.env.OPENAI_KEY
-//{ baseURL: "http://localhost:1234/v1", apiKey: apiKey }
-const openai = new OpenAI({ baseURL: "http://localhost:1234/v1", apiKey: apiKey })
 const trainingWaypointList = [
   "GATKI",
   "JEROM",
@@ -19,65 +12,46 @@ const trainingWaypointList = [
   "BROMO",
   "GÖTEBORG",
 ]
-let waypointList: string[]
-const configFile = fs.readFileSync("../config.json", "utf-8")
-const config = JSON.parse(configFile)
-export const processTranscription = async (
-  transcript: string,
-  overrideCallsigns?: CallsignObject[],
-) => {
-  console.log("config", config)
 
-  const params = config.nlu_parameters
-  try {
-    const completion = await openai.chat.completions.create({
-      model: config.nlu_model,
-      temperature: params.temperature,
+// Define schema
+const schema = new ParquetSchema({
+  system: { type: "UTF8" },
+  input: { type: "UTF8" },
+  output: { type: "JSON" },
+})
+const batchSize = 5
 
-      messages: [
-        { role: "system", content: getTranscribeSystemPrompt(overrideCallsigns) },
-        {
-          role: "user",
-          content: transcript,
-        },
-      ],
-      store: true,
-    })
+// Write data
+async function writeParquet(data) {
+  const writer = await ParquetWriter.openFile(schema, "nlu_dataset/train-00000-of-00001.parquet")
 
-    let result = completion.choices[0].message.content
-    //if qwen
-    if (result?.startsWith("<think>")) {
-      result = result.split("</think>")[1]
+  for (let i = 0; i < data.length; i += batchSize) {
+    const batch = data.slice(i, i + batchSize)
+    const callsigns = batch.map((item) => item.callsignObject)
+    const prompt = getPrompt(callsigns, trainingWaypointList)
+
+    for (const item of batch) {
+      await writer.appendRow({
+        system: prompt,
+        input: item.sentence,
+        output: JSON.stringify({
+          callsign: item.callsignObject.written,
+          action: item.action,
+          parameter: item.parameter,
+        }),
+      })
     }
-    console.log(result)
-    return result
-  } catch (error: unknown) {
-    console.error("Error processing transcription:", error)
-    return null
   }
+  await writer.close()
+  console.log("Parquet file written.")
 }
 
-const getTranscribeSystemPrompt = (overrideCallsigns?: CallsignObject[]) => {
-  let flightData = FlightDataStore.getInstance().getAllFlightData()
-  let callsigns: Object[] = []
-  waypointList = []
-  //lägg in icao också
-  flightData.forEach((data: FlightData) => {
-    callsigns.push({
-      idCallsign: data.callsign,
-      phoneticCallsign: callSignToNato(data.callsign),
-      icaoCallsign: "",
-    })
-  })
-  if (overrideCallsigns) {
-    callsigns = overrideCallsigns
-    waypointList = trainingWaypointList
-  }
-  console.log("WaypointList sent to NLU: " + waypointList.toString())
-  //console.log("callsigns", callsigns)
+const data = fs.readFileSync("main.speech_samples.json", "utf8")
+const parsedData = JSON.parse(data)
 
-  //Kanske borde para ihop alla callsignsigns, t ex [{SAS123, Sierra alpha sierra one two three, Scandinavian 123}, {UAL321, Uniform alpha lima three two one, United 321}]
-  //och sedan säga att om den hör en av de så ta den som är längst till vänster
+writeParquet(parsedData).catch(console.error)
+
+const getPrompt = (callsigns, waypointList) => {
   return `
 # Identity
 

@@ -1,13 +1,6 @@
-import OpenAI from "openai"
-import FlightDataStore from "./FlightDataStore"
-import { CallsignObject, FlightData } from "../interfaces"
-import { callSignToNato } from "./string_processing"
-import { configDotenv } from "dotenv"
+import pkg from "parquetjs-lite"
+const { ParquetWriter, ParquetSchema } = pkg
 import fs from "fs"
-configDotenv()
-const apiKey = process.env.OPENAI_KEY
-//{ baseURL: "http://localhost:1234/v1", apiKey: apiKey }
-const openai = new OpenAI({ baseURL: "http://localhost:1234/v1", apiKey: apiKey })
 const trainingWaypointList = [
   "GATKI",
   "JEROM",
@@ -19,65 +12,14 @@ const trainingWaypointList = [
   "BROMO",
   "GÖTEBORG",
 ]
-let waypointList: string[]
-const configFile = fs.readFileSync("../config.json", "utf-8")
-const config = JSON.parse(configFile)
-export const processTranscription = async (
-  transcript: string,
-  overrideCallsigns?: CallsignObject[],
-) => {
-  console.log("config", config)
+const batchSize = 5
 
-  const params = config.nlu_parameters
-  try {
-    const completion = await openai.chat.completions.create({
-      model: config.nlu_model,
-      temperature: params.temperature,
+const data = fs.readFileSync("main.speech_samples.json", "utf8")
+const parsedData = JSON.parse(data)
 
-      messages: [
-        { role: "system", content: getTranscribeSystemPrompt(overrideCallsigns) },
-        {
-          role: "user",
-          content: transcript,
-        },
-      ],
-      store: true,
-    })
+const outputStream = fs.createWriteStream("nlu_dataset/train.jsonl", { flags: "w" })
 
-    let result = completion.choices[0].message.content
-    //if qwen
-    if (result?.startsWith("<think>")) {
-      result = result.split("</think>")[1]
-    }
-    console.log(result)
-    return result
-  } catch (error: unknown) {
-    console.error("Error processing transcription:", error)
-    return null
-  }
-}
-
-const getTranscribeSystemPrompt = (overrideCallsigns?: CallsignObject[]) => {
-  let flightData = FlightDataStore.getInstance().getAllFlightData()
-  let callsigns: Object[] = []
-  waypointList = []
-  //lägg in icao också
-  flightData.forEach((data: FlightData) => {
-    callsigns.push({
-      idCallsign: data.callsign,
-      phoneticCallsign: callSignToNato(data.callsign),
-      icaoCallsign: "",
-    })
-  })
-  if (overrideCallsigns) {
-    callsigns = overrideCallsigns
-    waypointList = trainingWaypointList
-  }
-  console.log("WaypointList sent to NLU: " + waypointList.toString())
-  //console.log("callsigns", callsigns)
-
-  //Kanske borde para ihop alla callsignsigns, t ex [{SAS123, Sierra alpha sierra one two three, Scandinavian 123}, {UAL321, Uniform alpha lima three two one, United 321}]
-  //och sedan säga att om den hör en av de så ta den som är längst till vänster
+const getPrompt = (callsigns, waypointList) => {
   return `
 # Identity
 
@@ -132,9 +74,9 @@ Echo Whiskey Golf One Bravo Golf Cleared to Flight Level Ninety.
 
 <assistant_response>
 {
-	"callSign": "EWG1BG",
-	"action": "cleared flight level",
-	"parameter": 90
+  "callSign": "EWG1BG",
+  "action": "cleared flight level",
+  "parameter": 90
 }
 </assistant_response>
 
@@ -145,9 +87,9 @@ Sierra alpha sierra One Six Niner turn right to zero six seven.
 
 <assistant_response>
 {
-	"callSign": "SAS169",
-	"action": "cleared heading",
-	"parameter": 67
+  "callSign": "SAS169",
+  "action": "cleared heading",
+  "parameter": 67
 }
 </assistant_response>
 
@@ -157,9 +99,9 @@ Ryanair two two one maintain speed not less than mach decimal six eight.
 
 <assistant_response>
 {
-	"callSign": "RYA221",
-	"action": "cleared mach",
-	"parameter": 0.68
+  "callSign": "RYA221",
+  "action": "cleared mach",
+  "parameter": 0.68
 }
 </assistant_response>
 
@@ -169,9 +111,9 @@ Ryanair two two one resume normal speed when able.
 
 <assistant_response>
 {
-	"callSign": "RYA221",
-	"action": "cancel speed",
-	"parameter": null
+  "callSign": "RYA221",
+  "action": "cancel speed",
+  "parameter": null
 }
 </assistant_response>
 
@@ -181,9 +123,9 @@ Sierra alpha sierra One Six niner torn lift to one niner niner.
 
 <assistant_response>
 {
-	"callSign": "SAS169",
-	"action": "cleared heading",
-	"parameter": 199
+  "callSign": "SAS169",
+  "action": "cleared heading",
+  "parameter": 199
 }
 </assistant_response>
 
@@ -193,9 +135,9 @@ Pioneer damp, increase speed to five hundred knots.
 
 <assistant_response>
 {
-	"callSign": null,
-	"action": "cleared speed",
-	"parameter": 500
+  "callSign": null,
+  "action": "cleared speed",
+  "parameter": 500
 }
 </assistant_response>
 
@@ -240,9 +182,9 @@ Lufthansa six six five maintain speed not less than three five five knots.
 
 <assistant_response>
 {
-	"callSign": "DLH665",
-	"action": "cleared speed",
-	"parameter": 355
+  "callSign": "DLH665",
+  "action": "cleared speed",
+  "parameter": 355
 }
 </assistant_response>
 
@@ -251,3 +193,39 @@ return a JSON object
 /no_think
 `
 }
+
+// Write JSONL
+async function writeJSONL(data) {
+  for (let i = 0; i < data.length; i += batchSize) {
+    const batch = data.slice(i, i + batchSize)
+    const callsigns = batch.map((item) => item.callsignObject)
+    const prompt = getPrompt(callsigns, trainingWaypointList)
+
+    for (const item of batch) {
+      const input = item.sentence
+      const outputObj = {
+        callSign: item.callsignObject?.written || null,
+        action: item.action,
+        parameter: item.parameter,
+      }
+
+      //const base64Encoded = Buffer.from().toString("base64")
+
+      const messages = [
+        { role: "system", content: prompt },
+        { role: "user", content: input },
+        {
+          role: "assistant",
+          content: JSON.stringify(outputObj),
+        },
+      ]
+
+      outputStream.write(JSON.stringify({ messages }) + "\n")
+    }
+  }
+
+  outputStream.end()
+  console.log("✅ JSONL written to nlu_dataset/train.jsonl")
+}
+
+writeJSONL(parsedData).catch(console.error)
