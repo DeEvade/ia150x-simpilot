@@ -5,7 +5,7 @@
     "temperature": 0,
     "language": "en"
   },
-  "nlu_model": "deepseek-v2-lite-chat-finetuned",
+  "nlu_model": "qwen2.5-7b-finetuned",
   "nlu_parameters": {
     "temperature": 0
   }

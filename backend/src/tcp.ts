@@ -4,6 +4,7 @@ import { parseFlightData } from "./simExtract"
 import { isValidXML, ActionTypes } from "./utils"
 import { Server } from "socket.io"
 import FlightDataStore from "./FlightDataStore"
+import { set } from "mongoose"
 
 // Define the TCP server's host and port
 const HOST = "194.17.53.68" // Replace with your server's host
@@ -22,7 +23,7 @@ export const connectSocketServer = (io: Server) => {
 
   // Listen for data from the server
   client.on("data", async (data) => {
-    //    console.log("Received from server:", data.toString())
+    console.log("Received from server:", data.toString())
 
     if (!(await isValidXML(data.toString()))) return
     //console.log("Received from server:", data.toString())
@@ -31,6 +32,14 @@ export const connectSocketServer = (io: Server) => {
     //console.log("Parsed flight data:", parsedFlightData)
     flightDataStore.setFlightData(parsedFlightData.callsign, parsedFlightData)
   })
+
+  // send ping to server every 5 seconds
+
+  setInterval(() => {
+    const pingMessage = `<?xml version="1.0" encoding="UTF-8"?><NLRIn source="NARSIM" xmlns:sti="http://www.w3.org/2001/XMLSchema-instance"><ping/></NLRIn>`
+    client.write(pingMessage)
+    console.log("Ping sent to server")
+  }, 5000)
 
   // Handle connection closure
   client.on("close", () => {
@@ -52,7 +61,7 @@ const buildCommandString = (parameters: Command) => {
   try {
     const message = `<?xml version="1.0" encoding="UTF-8"?><NLRIn source="NARSIM" xmlns:sti="http://www.w3.org/2001/XMLSchema-instance"><flightplan>
  <callsign>${parameters.callSign}</callsign><${parameters.parsedAction.name}${
-      parameters.parsedAction.unit ? ` unit=${parameters.parsedAction.unit}` : ``
+      parameters.parsedAction.unit ? ` unit="${parameters.parsedAction.unit}"` : ``
     }>${!parameters.parameter ? "" : parameters.parameter}</${
       parameters.parsedAction.name
     }></flightplan></NLRIn>`
@@ -76,11 +85,10 @@ export const sendCommandToServer = (command: Command) => {
 }
 
 export const validateCommand = async (command: Command) => {
-  if (command.action === null || command.callSign === null) return false
+  if (!!!command.action || !!!command.callSign) return false
   //callsign matches list??
   const flightDataStore = FlightDataStore.getInstance()
   const callSignMatch = flightDataStore.getFlightData(command.callSign)
-  console.log("callsign : " + command.callSign + "callsignmatch: ", callSignMatch)
   if (!callSignMatch) return false
 
   if (
@@ -88,7 +96,6 @@ export const validateCommand = async (command: Command) => {
       (action) => action.toLowerCase() === command.action.toLowerCase(),
     )
   ) {
-    //extremt ful - måste ju gå att göra bättre
     return false
   }
   //const validTypeOfParamter = ...

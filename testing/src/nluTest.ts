@@ -30,8 +30,8 @@ interface FullTestCase {
 }
 const client = new MongoClient(uri)
 const dateString = new Date().toISOString().replace(/:/g, "-").replace(/\..+/, "")
-
-const logFilePath = path.join(__dirname + "/tests/", "fullTest_" + dateString + ".log")
+const timeArray: number[] = []
+const logFilePath = path.join(__dirname + "/nluTests/", "fullTest_" + dateString + ".log")
 
 const run = async () => {
   await client.connect()
@@ -61,7 +61,7 @@ const run = async () => {
     })
     for (const test of testCasesArray) {
       const testCase = test.testCase
-      let transcribedSentence = await transcribeText(testCase.audio, callSignArray)
+      let transcribedSentence = testCase.sentence
       if (!transcribedSentence) {
         console.error("Failed to transcribe audio")
         continue
@@ -81,6 +81,10 @@ const run = async () => {
   ${i.toString()} 
   
   ${JSON.stringify(counter)}} -> error rate = ${(counter.totalCounter / testSize) * 100}%
+
+  Fastest time: ${Math.min(...timeArray)}
+  Slowest time: ${Math.max(...timeArray)}
+  Average time: ${timeArray.reduce((a, b) => a + b, 0) / timeArray.length}
   
   ${configJSON}
   `
@@ -99,9 +103,14 @@ async function entityAndIntentTest(
   for (const testCase of testCasesArray) {
     try {
       let somethingWrong = false
+      const timeBefore = new Date().getTime()
       const response = await parseTranscribedText(testCase.transcribedSentence, callSignArray)
+      const timeAfter = new Date().getTime()
+      const timeDiff = timeAfter - timeBefore
+      timeArray.push(timeDiff)
+      console.log("timeDiff", timeDiff)
       if (!response) {
-        throw new Error("Failed to parse transcribed text")
+        continue
       }
 
       let responseJSON = JSON.parse(response.processedTranscript) as Command
@@ -148,6 +157,8 @@ Facit: ${testCase.testCase.sentence}
 Transcribed: ${testCase.transcribedSentence} 
 ResponseJSON: ${JSON.stringify(responseJSON)}
 Errors: ${errors.join(", ")}
+
+
 ----------------------------------
 `
         console.log(errorLog)

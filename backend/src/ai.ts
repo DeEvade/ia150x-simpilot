@@ -73,7 +73,8 @@ const getTranscribeSystemPrompt = (overrideCallsigns?: CallsignObject[]) => {
     callsigns = overrideCallsigns
     waypointList = trainingWaypointList
   }
-  console.log("WaypointList sent to NLU: " + waypointList.toString())
+  //console.log("WaypointList sent to NLU: " + waypointList.toString())
+  //console.log("callsigns", callsigns)
   //console.log("callsigns", callsigns)
 
   //Kanske borde para ihop alla callsignsigns, t ex [{SAS123, Sierra alpha sierra one two three, Scandinavian 123}, {UAL321, Uniform alpha lima three two one, United 321}]

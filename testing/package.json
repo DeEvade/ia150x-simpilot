@@ -5,6 +5,7 @@
   "scripts": {
     "fullTest": "ts-node src/fullTest.ts",
     "asrTest": "ts-node src/asrTest.ts",
+    "nluTest": "ts-node src/nluTest.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

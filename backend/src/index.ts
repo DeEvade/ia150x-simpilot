@@ -34,6 +34,21 @@ connectSocketServer(io)
 
 const upload = multer({ dest: "uploads/" })
 
+app.get("/flightdata", (req: Request, res: Response) => {
+  const flightDataStore = FlightDataStore.getInstance()
+  const flightData = flightDataStore.getAllFlightData()
+  const x = Array.from(flightData.entries()).map(([key, data]) => ({
+    callsign: key,
+    lat: data.lat,
+    lon: data.lon,
+    alt: data.alt,
+    hdg: data.hdg,
+    mach: data.mach,
+  }))
+
+  res.json(x)
+})
+
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello from the server!")
 })

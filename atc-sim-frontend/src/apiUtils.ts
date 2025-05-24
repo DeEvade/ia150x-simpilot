@@ -1,3 +1,5 @@
+import { FlightData } from "./components/FlightInfo"
+
 const backendPort = 8080
 const uri = `${window.location.protocol}//${window.location.hostname}:${backendPort}`
 console.log("uri is ", uri)
@@ -7,7 +9,7 @@ export const transcribeText = async (audioChunks: Blob[]) => {
   const blob = new Blob(audioChunks, { type: "audio/webm" })
   const formData = new FormData()
   formData.append("file", blob, "audio.webm")
-    formData.append("model", "whisper-1")
+  formData.append("model", "whisper-1")
   try {
     const response = await fetch(`${uri}/processAudio`, {
       method: "POST",
@@ -45,5 +47,25 @@ export const parseTranscribedText = async (transcript: string) => {
   } catch (error: unknown) {
     console.error("Error parsing transcribed text:", error)
     return new Response(null)
+  }
+}
+
+export const getFlightData = async () => {
+  try {
+    const response = await fetch(`${uri}/flightData`)
+    if (!response.ok) {
+      console.error("Failed to fetch flight data:", response.statusText)
+      return null
+    }
+    const data = await response.json()
+    console.log("Flight data:", data)
+    if (!data) {
+      console.error("No flight data available")
+      return null
+    }
+    return data as FlightData[]
+  } catch (error: unknown) {
+    console.error("Error fetching flight data:", error)
+    return null
   }
 }

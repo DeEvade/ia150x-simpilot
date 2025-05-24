@@ -7,6 +7,8 @@ const testSize = 100 //  change according to size of testing collection
 
 const client = new MongoClient(uri)
 
+const timeArray: number[] = []
+
 const run = async () => {
   let totalWrongCounter = 0
   let totalLength = 0
@@ -22,16 +24,18 @@ const run = async () => {
     }
     let realSentence = JSON.stringify(testCase.sentence)
     realSentence = realSentence.replace(/"/g, "")
+    const timeBefore = new Date().getTime()
 
-    let transcribedSentence = await transcribeText(testCase.audio, [])
+    let transcribedSentence = (await transcribeText(testCase.audio, [])) || ""
+    const timeAfter = new Date().getTime()
+    const timeDiff = timeAfter - timeBefore
+    timeArray.push(timeDiff)
+    console.log("Time taken: ", timeDiff)
     transcribedSentence = processTranscription(transcribedSentence)
     console.log("-------------------------------------------------------")
     console.log("-------------------------------------------------------")
     console.log("Real spoken sentence: ", realSentence)
     console.log("Transcribed sentence: ", transcribedSentence)
-    // console.log(realSentence) // Logs the retrieved document
-    // console.log("Transcription of spoken sentence: ")
-    // console.log(transcribedSentence)
     const { length, wer, wrongCounter } = wordErrorRate(realSentence, transcribedSentence)
     totalWrongCounter += wrongCounter
     totalLength += length
@@ -43,6 +47,12 @@ const run = async () => {
     console.log("total WER: ", totalWer + " %")
     console.log("-------------------------------------------------------")
   }
+  console.log(`
+  Fastest time: ${Math.min(...timeArray)}
+  Slowest time: ${Math.max(...timeArray)}
+  Average time: ${timeArray.reduce((a, b) => a + b, 0) / timeArray.length}
+    `)
+
   await client.close()
 }
 

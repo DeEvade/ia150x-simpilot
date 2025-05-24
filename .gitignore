@@ -12,6 +12,8 @@ topnotchsky-backend
 backend/uploads
 
 testing/src/tests
+testing/src/nluTests
+
 training/openai
 training/dataset
 training/nlu_dataset

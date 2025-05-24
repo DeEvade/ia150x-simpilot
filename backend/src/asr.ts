@@ -118,6 +118,8 @@ const generateASRPrompt = async (overrideCallsigns?: CallsignObject[]): Promise<
   waypointList = []
   //lägg in icao också
   flightData.forEach((data: FlightData) => {
+    console.log("callsign", data.callsign)
+
     callsigns.push({
       written: data.callsign,
       phonetic: "",
@@ -136,16 +138,22 @@ const generateASRPrompt = async (overrideCallsigns?: CallsignObject[]): Promise<
 
   //console.log("WaypointList sent to NLU: " + waypointList.toString())
   const callsignStrings = callsigns.map((callsign) => {
-    let callsignArray = callsign.phonetic.split(" ")
+    let callsignArray = callsign.spoken.split(" ")
     for (let i = 0; i < 3; i++) {
       //callsignArray.pop()
     }
     const callsignString = callsignArray.join(" ")
     return callsignString
   })
+
+  //Remove all duplcate words from the callsign list
+  const uniqueCallsigns = new Set(callsignStrings)
+  callsignStrings.length = 0 // Clear the original array
+  callsignStrings.push(...uniqueCallsigns) // Add unique values back to the array
+
   //console.log("callsignListString: ", callsigns)
 
-  result += callsignStrings.join(", ")
+  //result += callsignStrings.join(" ")
   result += ", " + actionList.join(", ")
   let i = 0
   let lengthInToken = encoding.encode(result).length
