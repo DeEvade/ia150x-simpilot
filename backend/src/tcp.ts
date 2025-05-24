@@ -5,6 +5,7 @@ import { isValidXML, ActionTypes } from "./utils"
 import { Server } from "socket.io"
 import FlightDataStore from "./FlightDataStore"
 import { set } from "mongoose"
+import { log } from "console"
 
 // Define the TCP server's host and port
 const HOST = "194.17.53.68" // Replace with your server's host
@@ -23,7 +24,7 @@ export const connectSocketServer = (io: Server) => {
 
   // Listen for data from the server
   client.on("data", async (data) => {
-    console.log("Received from server:", data.toString())
+    // console.log("Received from server:", data.toString())
 
     if (!(await isValidXML(data.toString()))) return
     //console.log("Received from server:", data.toString())
@@ -38,7 +39,7 @@ export const connectSocketServer = (io: Server) => {
   setInterval(() => {
     const pingMessage = `<?xml version="1.0" encoding="UTF-8"?><NLRIn source="NARSIM" xmlns:sti="http://www.w3.org/2001/XMLSchema-instance"><ping/></NLRIn>`
     client.write(pingMessage)
-    console.log("Ping sent to server")
+    // console.log("Ping sent to server")
   }, 5000)
 
   // Handle connection closure
@@ -58,6 +59,9 @@ Example Output:
 	parameter: 90
 }*/
 const buildCommandString = (parameters: Command) => {
+    if(parameters.parsedAction.name == "clr_mach" && parameters.parameter) {
+        parameters.parameter = parameters.parameter.toString().replace(/^0/, '');
+    }
   try {
     const message = `<?xml version="1.0" encoding="UTF-8"?><NLRIn source="NARSIM" xmlns:sti="http://www.w3.org/2001/XMLSchema-instance"><flightplan>
  <callsign>${parameters.callSign}</callsign><${parameters.parsedAction.name}${

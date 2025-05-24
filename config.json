@@ -1,11 +1,11 @@
 {
-  "asr_model": "whisper-small-finetuned2",
+  "asr_model": "gpt-4o-transcribe",
   "is_local": true,
   "asr_parameters": {
     "temperature": 0,
     "language": "en"
   },
-  "nlu_model": "qwen2.5-7b-finetuned",
+  "nlu_model": "gpt-4o-mini",
   "nlu_parameters": {
     "temperature": 0
   }
