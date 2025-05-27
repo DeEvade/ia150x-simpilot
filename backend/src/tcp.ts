@@ -59,9 +59,9 @@ Example Output:
 	parameter: 90
 }*/
 const buildCommandString = (parameters: Command) => {
-    if(parameters.parsedAction.name == "clr_mach" && parameters.parameter) {
-        parameters.parameter = parameters.parameter.toString().replace(/^0/, '');
-    }
+  if (parameters.parsedAction.name == "clr_mach" && parameters.parameter) {
+    parameters.parameter = parameters.parameter.toString().replace(/^0/, "")
+  }
   try {
     const message = `<?xml version="1.0" encoding="UTF-8"?><NLRIn source="NARSIM" xmlns:sti="http://www.w3.org/2001/XMLSchema-instance"><flightplan>
  <callsign>${parameters.callSign}</callsign><${parameters.parsedAction.name}${
