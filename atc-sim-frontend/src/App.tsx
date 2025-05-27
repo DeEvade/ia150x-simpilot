@@ -1,6 +1,7 @@
 import * as React from "react"
 import VoiceRecorder from "./components/VoiceRecorder"
 import { FlightInfo } from "./components/FlightInfo"
+import { CommandLogViewer } from "./components/CommandLog"
 import { TopNotchSky } from "./components/TopNotchSky"
 
 export default function App() {
@@ -15,6 +16,7 @@ export default function App() {
         overflow: "hidden",
       }}
     >
+
       <div style={{ flex: 1, height: "100vh", overflow: "hidden" }}>
         <TopNotchSky />
       </div>
@@ -24,7 +26,7 @@ export default function App() {
           <VoiceRecorder />{" "}
         </div>
         <div>
-          <FlightInfo />
+        <CommandLogViewer />{" "}
         </div>
       </div>
     </div>

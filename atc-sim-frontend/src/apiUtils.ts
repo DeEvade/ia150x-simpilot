@@ -42,7 +42,7 @@ export const parseTranscribedText = async (transcript: string) => {
     }
 
     const result = await response.json()
-    console.log(result)
+    console.log("RESULT: ", result)
     return result
   } catch (error: unknown) {
     console.error("Error parsing transcribed text:", error)

@@ -2,7 +2,7 @@ export interface Command {
   callSign: string
   action: string
   parsedAction: Action
-  parameter: number
+  parameter: number | string
 }
 
 export interface CallsignObject {
@@ -18,6 +18,7 @@ export interface Action {
 
 export interface FlightData {
   callsign: string
+  callsignICAO: string
   lat: number //rad
   lon: number //rad
   alt: number //meter

@@ -1,6 +1,7 @@
 import { FlightData } from "../interfaces"
 
 import { parseStringPromise } from "xml2js"
+import { findSingleICAO } from "./utils"
 
 export async function parseFlightData(xmlString: string): Promise<FlightData | null> {
   try {
@@ -8,8 +9,8 @@ export async function parseFlightData(xmlString: string): Promise<FlightData | n
     const track = result.NLROut.track
     if (!track) return null
     const ems = track.ems
-
     const callsign = track.callsign
+    const callsignICAO = await findSingleICAO(callsign);
     const lat = parseFloat(track.lat._)
     const lon = parseFloat(track.lon._)
     const alt = parseFloat(track.alt._)
@@ -21,6 +22,7 @@ export async function parseFlightData(xmlString: string): Promise<FlightData | n
     }
     const fd: FlightData = {
       callsign,
+      callsignICAO,
       lat,
       lon,
       alt,

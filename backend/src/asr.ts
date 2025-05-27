@@ -87,8 +87,8 @@ export const transcribeData = async (formData: FormData, overrideCallsigns: Call
     formData.append("language", "en")
     formData.append("temperature", "0")
     const oldUrl = "https://api.openai.com/v1/audio/transcriptions"
-    //const response = await fetch(oldUrl, {
-    const response = await fetch("http://localhost:8000/v1/audio/transcriptions", {
+    const response = await fetch(oldUrl, {
+    // const response = await fetch("http://localhost:8000/v1/audio/transcriptions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
