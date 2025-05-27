@@ -7,7 +7,7 @@ import fs from "fs"
 configDotenv()
 const apiKey = process.env.OPENAI_KEY
 //{ baseURL: "http://localhost:1234/v1", apiKey: apiKey }
-const openai = new OpenAI({ baseURL: "http://localhost:1234/v1", apiKey: apiKey })
+const openai = new OpenAI({})
 const trainingWaypointList = [
   "GATKI",
   "JEROM",
