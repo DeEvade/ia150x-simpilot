@@ -1,6 +1,6 @@
 import OpenAI from "openai"
 import FlightDataStore from "./FlightDataStore"
-import { CallsignObject, FlightData } from "../interfaces"
+import { CallsignObject, Command, FlightData } from "../interfaces"
 import { callSignToNato } from "./string_processing"
 import { configDotenv } from "dotenv"
 import fs from "fs"
@@ -11,82 +11,84 @@ const apiKey = process.env.OPENAI_KEY
 // const openai = new OpenAI({ baseURL: "http://localhost:1234/v1", apiKey: apiKey })
 const openai = new OpenAI({ apiKey: apiKey })
 const trainingWaypointList = [
-  "GATKI",
-  "JEROM",
-  "KONKA",
-  "SKEAR",
-  "VIRGA",
-  "PELUP",
-  "ARN",
-  "BROMO",
-  "GÖTEBORG",
+    "GATKI",
+    "JEROM",
+    "KONKA",
+    "SKEAR",
+    "VIRGA",
+    "PELUP",
+    "ARN",
+    "BROMO",
+    "GÖTEBORG",
 ]
 let waypointList: string[]
 const configFile = fs.readFileSync("../config.json", "utf-8")
 const config = JSON.parse(configFile)
 export const processTranscription = async (
-  transcript: string,
-  overrideCallsigns?: CallsignObject[],
+    transcript: string,
+    overrideCallsigns?: CallsignObject[],
 ) => {
-  console.log("config", config)
+    console.log("config", config)
 
-  const params = config.nlu_parameters
-  try {
-    const completion = await openai.chat.completions.create({
-      model: config.nlu_model,
-      temperature: params.temperature,
+    const params = config.nlu_parameters
+    try {
+        const completion = await openai.chat.completions.create({
+            model: config.nlu_model,
+            temperature: params.temperature,
 
-      messages: [
-        { role: "system", content: getTranscribeSystemPrompt(overrideCallsigns) },
-        {
-          role: "user",
-          content: transcript,
-        },
-      ],
-      store: true,
-    })
+            messages: [
+                { role: "system", content: getTranscribeSystemPrompt(overrideCallsigns) },
+                {
+                    role: "user",
+                    content: transcript,
+                },
+            ],
+            store: true,
+        })
 
-    let result = completion.choices[0].message.content
-    //if qwen
-    if (result?.startsWith("<think>")) {
-      result = result.split("</think>")[1]
+        let result = completion.choices[0].message.content
+        //if qwen
+        if (result?.startsWith("<think>")) {
+            result = result.split("</think>")[1]
+        }
+        console.log(result)
+        return result
+    } catch (error: unknown) {
+        console.error("Error processing transcription:", error)
+        return null
     }
-    console.log(result)
-    return result
-  } catch (error: unknown) {
-    console.error("Error processing transcription:", error)
-    return null
-  }
 }
 
+
+
 const getTranscribeSystemPrompt = (overrideCallsigns?: CallsignObject[]) => {
-  let flightData = FlightDataStore.getInstance().getAllFlightData()
-  let callsigns: Object[] = []
-  waypointList = []
-  //lägg in icao också
-  flightData.forEach((data: FlightData) => {
-    callsigns.push({
-      idCallsign: data.callsign,
-      phoneticCallsign: callSignToNato(data.callsign),
-      icaoCallsign: data.callsignICAO,
+    let flightData = FlightDataStore.getInstance().getAllFlightData()
+    let callsigns: Object[] = []
+    waypointList = []
+    //lägg in icao också
+    flightData.forEach((data: FlightData) => {
+        callsigns.push({
+            idCallsign: data.callsign,
+            phoneticCallsign: callSignToNato(data.callsign),
+            icaoCallsign: data.callsignICAO,
+        })
     })
-  })
-  if (overrideCallsigns) {
-    callsigns = overrideCallsigns
-    waypointList = trainingWaypointList
-  }
-  console.log("callsigns sent to NLU: \n", callsigns)
+    if (overrideCallsigns) {
+        callsigns = overrideCallsigns
+        waypointList = trainingWaypointList
+    }
+    console.log("callsigns sent to NLU: \n", callsigns)
 
     waypointList = trainingWaypointList //TEMPORÄR 
 
-    
-  //console.log("WaypointList sent to NLU: " + waypointList.toString())
-  //console.log("callsigns", callsigns)
-  // console.log("callsigns", callsigns)
 
-  //Kanske borde para ihop alla callsignsigns, t ex [{SAS123, Sierra alpha sierra one two three, Scandinavian 123}, {UAL321, Uniform alpha lima three two one, United 321}]
-  //och sedan säga att om den hör en av de så ta den som är längst till vänster
-  return `
+    //console.log("WaypointList sent to NLU: " + waypointList.toString())
+    //console.log("callsigns", callsigns)
+    // console.log("callsigns", callsigns)
+
+    //Kanske borde para ihop alla callsignsigns, t ex [{SAS123, Sierra alpha sierra one two three, Scandinavian 123}, {UAL321, Uniform alpha lima three two one, United 321}]
+    //och sedan säga att om den hör en av de så ta den som är längst till vänster
+    return `
 # Identity
 
 You are tasked to extract information from an ATC (Air Traffic Controller) command, as well as a list of available callsigns. 

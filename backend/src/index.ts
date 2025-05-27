@@ -137,6 +137,7 @@ app.post("/processTranscription", async (req: Request, res: Response) => {
                 audio: ttsResult.audio,
                 pilotSentence: ttsResult.pilotSentence,
                 error: "did not understand command",
+                failedCommand: processedTranscript,
             })
             return
         }

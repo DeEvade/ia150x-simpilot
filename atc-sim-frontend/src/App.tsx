@@ -1,6 +1,7 @@
 import * as React from "react"
 import VoiceRecorder from "./components/VoiceRecorder"
 import { FlightInfo } from "./components/FlightInfo"
+import { CommandLogViewer } from "./components/CommandLog"
 
 export default function App() {
   return (
@@ -14,10 +15,13 @@ export default function App() {
       }}
     >
       <div style={{ flex: 1 }}>
-        <VoiceRecorder />{" "}
+        <CommandLogViewer />{" "}
       </div>
       <div style={{ flex: 1 }}>
         <FlightInfo />
+      </div>
+      <div style={{ flex: 1 }}>
+        <VoiceRecorder />{" "}
       </div>
     </div>
   )
