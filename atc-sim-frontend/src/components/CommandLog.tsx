@@ -23,11 +23,31 @@ export const CommandLogViewer = () => {
     <div>
       <h2>Command Log</h2>
       <ul className="font-mono text-sm whitespace-pre-wrap">
-        {log.map((entry, idx) => (
-          <li key={idx}>{entry}</li>
-        ))}
+        {log.map((entry, idx) => {
+          const x = JSON.parse(entry)
+
+          return (
+            <div
+              key={idx}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                marginBottom: "10px",
+                gap: "2px",
+                borderRadius: "5px",
+                backgroundColor: "rgba(0, 0, 0, 0.4)",
+                border: "1px solid rgba(0, 0, 0, 1)",
+                width: "fit-content",
+                padding: "10px",
+              }}
+            >
+              <div>Callsign: {x.callSign}</div>
+              <div>Action: {x.action}</div>
+              <div>Parameter: {x.parameter}</div>
+            </div>
+          )
+        })}
       </ul>
     </div>
   )
 }
-
