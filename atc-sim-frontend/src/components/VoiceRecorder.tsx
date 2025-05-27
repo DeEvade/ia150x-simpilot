@@ -36,15 +36,20 @@ export default function VoiceRecorder() {
     }
 
 
-    const logCommand = (commandObj: string) => {
-        const existingLogsRaw = localStorage.getItem("commandLogs")
-        const logs: string[] = existingLogsRaw ? JSON.parse(existingLogsRaw) : []
+    const logCommand = (commandObj: string, wasSuccessful: boolean) => {
+        const existingLogsRaw = localStorage.getItem("commandLogs");
+        const logs: { log: string; wasSuccesful: boolean }[] = existingLogsRaw
+            ? JSON.parse(existingLogsRaw)
+            : [];
 
-        logs.push(commandObj)
+        logs.push({
+            log: commandObj,
+            wasSuccesful: wasSuccessful, // note: you spelled it "wasSuccesful" in your component
+        });
 
-        localStorage.setItem("commandLogs", JSON.stringify(logs, null, 2)) // pretty-print
-        window.dispatchEvent(new Event("command-logged"))
-    }
+        localStorage.setItem("commandLogs", JSON.stringify(logs, null, 2)); // pretty-print
+        window.dispatchEvent(new Event("command-logged"));
+    };
 
     const processAudio = async (data: Blob[]) => {
         console.log("Processing audio...", data.length)
@@ -67,11 +72,11 @@ export default function VoiceRecorder() {
             const parsedText = await parseTranscribedText(transcirbedText.text)
             if (parsedText) {
                 setProcessedTranscript(parsedText.processedTranscript)
-                if(parsedText.processedTranscript){
-                    logCommand(parsedText.processedTranscript) 
+                if (parsedText.processedTranscript) {
+                    logCommand(parsedText.processedTranscript, true)
                 }
-                else if(parsedText.failedCommand){
-                    logCommand(parsedText.failedCommand)
+                else if (parsedText.failedCommand) {
+                    logCommand(parsedText.failedCommand, false)
                 }
                 console.log("test123", parsedText.processedTranscript)
                 console.log("test321", parsedText)
@@ -143,3 +148,4 @@ export default function VoiceRecorder() {
         </div>
     )
 }
+
