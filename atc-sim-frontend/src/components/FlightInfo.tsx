@@ -42,7 +42,7 @@ export const FlightInfo = () => {
   }
 
   return (
-    <div style={{ height: "90vh", overflowY: "scroll" }}>
+    <div style={{ height: "70vh", overflowY: "scroll" }}>
       <h2>Flight Data</h2>
       <input
         type="text"
