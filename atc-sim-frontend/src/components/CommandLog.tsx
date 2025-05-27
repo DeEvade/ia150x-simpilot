@@ -6,6 +6,9 @@ export const CommandLogViewer = () => {
         wasSuccesful: boolean
     }
     const [log, setLog] = useState<logType[]>([])
+    const [showTranscript, setShowTranscript] = useState<boolean>(false);
+
+
 
     const loadLog = () => {
         const logs = JSON.parse(localStorage.getItem("commandLogs") || "[]")
@@ -50,6 +53,9 @@ export const CommandLogViewer = () => {
                 {log.map((entry, idx) => {
                     if (entry == null) return null
                     const x = JSON.parse(entry.log)
+
+
+
                     return (
                         <div
                             key={idx}
@@ -66,11 +72,32 @@ export const CommandLogViewer = () => {
                                 color: entry.wasSuccesful ? "inherit" : "red",
                             }}
                         >
+                            <div
+                                onClick={() => {
+                                    setShowTranscript((prev) => {
+                                        return !prev
+                                    })
+                                }}
+                            >X</div>
                             <div>Callsign: {x.callSign}</div>
                             <div>Action: {x.action}</div>
                             <div>Parameter: {x.parameter}</div>
+                            {showTranscript && (
+                                <>
+                                    <hr style={{
+                                        border: "none",
+                                        height: "1px",
+                                        backgroundColor: "#ccc",
+                                        margin: "16px 0",
+                                    }}
+                                    />
+                                    <div>
+                                        <div>Transcript: {}</div>
+                                    </div>
+                                </>)}
                         </div>
                     )
+
                 })}
             </ul>
         </div>
