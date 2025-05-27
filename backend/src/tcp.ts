@@ -24,7 +24,8 @@ export const connectSocketServer = (io: Server) => {
 
   // Listen for data from the server
   client.on("data", async (data) => {
-    // console.log("Received from server:", data.toString())
+
+    //console.log("Received from server:", data.toString())
 
     if (!(await isValidXML(data.toString()))) return
     //console.log("Received from server:", data.toString())

@@ -2,6 +2,7 @@ import * as React from "react"
 import VoiceRecorder from "./components/VoiceRecorder"
 import { FlightInfo } from "./components/FlightInfo"
 import { CommandLogViewer } from "./components/CommandLog"
+import { TopNotchSky } from "./components/TopNotchSky"
 
 export default function App() {
   return (
@@ -12,16 +13,21 @@ export default function App() {
         alignItems: "center",
         width: "100vw",
         height: "100vh",
+        overflow: "hidden",
       }}
     >
-      <div style={{ flex: 1 }}>
+
+      <div style={{ flex: 1, height: "100vh", overflow: "hidden" }}>
+        <TopNotchSky />
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", flex: 0.5, padding: "20px" }}>
+        <div>
+          <VoiceRecorder />{" "}
+        </div>
+        <div>
         <CommandLogViewer />{" "}
-      </div>
-      <div style={{ flex: 1 }}>
-        <FlightInfo />
-      </div>
-      <div style={{ flex: 1 }}>
-        <VoiceRecorder />{" "}
+        </div>
       </div>
     </div>
   )
