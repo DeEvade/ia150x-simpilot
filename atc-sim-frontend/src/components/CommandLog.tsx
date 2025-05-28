@@ -31,26 +31,25 @@ export const CommandLogViewer = () => {
   }
   return (
     <div>
-      <h2 style={{ marginTop: "50px" }}>Command Log</h2>
+     <h2 style={{margin: "0"}}>Command Log</h2>
       <div
         onClick={clearLog}
         style={{
           display: "flex",
           justifyContent: "center",
-          top: 10,
-          left: 10,
-          backgroundColor: "#ff4d4f",
-          color: "white",
+          color: "#ff4d4f",
           border: "none",
-          width: "25px",
-          height: "25px",
+          width: "50px",
+          height: "10px",
           borderRadius: "50%",
           cursor: "pointer",
+          fontSize: "10px"
         }}
       >
-        &times;
+        {/* &times; */}
+        Clear log
       </div>
-      <ul className="font-mono text-sm whitespace-pre-wrap">
+      <ul style={{overflowY: "auto", maxHeight: "50vh", padding: "0"}}>
         {log.map((entry, idx) => {
           if (entry == null) return null
           const x = JSON.parse(entry.log)

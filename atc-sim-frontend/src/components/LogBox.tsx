@@ -55,7 +55,7 @@ export const LogBox = (props: Props) => {
             }}
           />
           <div>
-            <div>Transcript: {entry.rawTranscript}</div>
+            <div>Transcript: {entry.rawTranscript || "N/A"}</div>
           </div>
         </>
       )}
