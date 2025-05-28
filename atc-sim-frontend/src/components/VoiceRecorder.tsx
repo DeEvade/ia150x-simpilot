@@ -36,15 +36,16 @@ export default function VoiceRecorder() {
     }
 
 
-    const logCommand = (commandObj: string, wasSuccessful: boolean) => {
+    const logCommand = (commandObj: string, wasSuccessful: boolean, rawTranscript: string) => {
         const existingLogsRaw = localStorage.getItem("commandLogs");
-        const logs: { log: string; wasSuccesful: boolean }[] = existingLogsRaw
+        const logs: { log: string; wasSuccesful: boolean; rawTranscript: string }[] = existingLogsRaw
             ? JSON.parse(existingLogsRaw)
             : [];
 
         logs.push({
             log: commandObj,
-            wasSuccesful: wasSuccessful, // note: you spelled it "wasSuccesful" in your component
+            wasSuccesful: wasSuccessful, 
+            rawTranscript: rawTranscript,
         });
 
         localStorage.setItem("commandLogs", JSON.stringify(logs, null, 2)); // pretty-print
@@ -73,10 +74,10 @@ export default function VoiceRecorder() {
             if (parsedText) {
                 setProcessedTranscript(parsedText.processedTranscript)
                 if (parsedText.processedTranscript) {
-                    logCommand(parsedText.processedTranscript, true)
+                    logCommand(parsedText.processedTranscript, true, transcirbedText.text)
                 }
                 else if (parsedText.failedCommand) {
-                    logCommand(parsedText.failedCommand, false)
+                    logCommand(parsedText.failedCommand, false, transcirbedText.text)
                 }
                 console.log("test123", parsedText.processedTranscript)
                 console.log("test321", parsedText)
@@ -88,6 +89,8 @@ export default function VoiceRecorder() {
                 const audioBlob = new Blob([Uint8Array.from(atob(parsedText.audio), c => c.charCodeAt(0))], {
                     type: data.mimeType
                 });
+                console.log("here is the audio blob::: ", audioBlob)
+                console.log("here is the audio::: ", parsedText.audio)
                 const audioUrl = URL.createObjectURL(audioBlob);
                 const audio = new Audio(audioUrl);
                 audio.play();

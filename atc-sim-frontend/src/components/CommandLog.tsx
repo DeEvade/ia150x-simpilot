@@ -5,6 +5,7 @@ export const CommandLogViewer = () => {
   type logType = {
     log: string
     wasSuccesful: boolean
+    rawTranscript: string
   }
   const [log, setLog] = useState<logType[]>([])
 

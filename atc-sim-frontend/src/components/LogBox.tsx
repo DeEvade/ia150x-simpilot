@@ -4,6 +4,7 @@ interface Props {
   entry: {
     log: string
     wasSuccesful: boolean
+    rawTranscript: string
   }
   x: {
     callSign: string
@@ -54,7 +55,7 @@ export const LogBox = (props: Props) => {
             }}
           />
           <div>
-            <div>Transcript: {}</div>
+            <div>Transcript: {entry.rawTranscript}</div>
           </div>
         </>
       )}
