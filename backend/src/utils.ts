@@ -56,7 +56,7 @@ export const findICAO = async (callsignsTL: string[]): Promise<Record<string, st
         const result: Record<string, string> = {};
 
         for (const tl of callsignsTL) {
-            const shortTl = tl.slice(0, 3); // safer than substring
+            const shortTl = tl.slice(0, 3); 
             const match = await collection.findOne({ tlcs: shortTl }) as TestCase | null;
 
             if (match) {
@@ -92,4 +92,5 @@ export const findSingleICAO = async (callsignTL: string): Promise<string> => {
         await client.close();
     }
 };
+
 
