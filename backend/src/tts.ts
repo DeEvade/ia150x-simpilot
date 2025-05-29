@@ -1,20 +1,95 @@
-const voiceModels = ["p225", "p226", "p227"]
-const ip = "0.0.0.0"
-const port = 1337
-let availableModels = Array.from(voiceModels)
+const voiceModelsSWE : string[] = [
+"sv-SE-MattiasNeural",
+"sv-SE-HilleviNeural",
+]
+const voiceModelsNOR : string[] = [
+"nb-NO-PernilleNeural",
+"nb-NO-FinnNeural",
+]
+const voiceModelsIRE : string[] = [
+"en-IE-EmilyNeural",
+"en-IE-ConnorNeural",
+]
+const voiceModelsGEN : string[] = [
+"en-GB-SoniaNeural",
+"en-GB-RyanNeural", 
+"en-GB-LibbyNeural", 
+"en-GB-AbbiNeural", 
+"en-GB-AlfieNeural", 
+"en-GB-BellaNeural", 
+"en-GB-ElliotNeural", 
+"en-GB-EthanNeural", 
+"en-GB-HollieNeural", 
+"en-GB-MaisieNeural", 
+"en-GB-NoahNeural", 
+"en-GB-OliverNeural", 
+"en-GB-OliviaNeural", 
+"en-GB-ThomasNeural", 
+"en-HK-YanNeural", 
+"en-HK-SamNeural", 
+"en-IN-AaravNeural", 
+"en-IN-AashiNeural", 
+"en-IN-AartiNeural", 
+"en-IN-ArjunNeural", 
+"en-IN-AnanyaNeural", 
+"en-IN-KavyaNeural", 
+"en-IN-KunalNeural", 
+"en-IN-NeerjaNeural", 
+"en-IN-PrabhatNeural", 
+"en-IN-AartiIndicNeural", 
+"en-IN-ArjunIndicNeural", 
+"en-IN-NeerjaIndicNeural", 
+"en-IN-PrabhatIndicNeural", 
+"en-KE-AsiliaNeural", 
+"en-KE-ChilembaNeural", 
+"en-NG-EzinneNeural", 
+"en-NG-AbeoNeural", 
+"en-NZ-MollyNeural", 
+"en-NZ-MitchellNeural", 
+"en-PH-RosaNeural", 
+"en-PH-JamesNeural", 
+"en-SG-LunaNeural", 
+"en-SG-WayneNeural", 
+"en-TZ-ImaniNeural", 
+"en-TZ-ElimuNeural", 
+"en-US-AvaNeural", 
+"en-US-AndrewNeural", 
+"en-US-EmmaNeural", 
+"en-US-BrianNeural", 
+"en-US-JennyNeural", 
+"en-US-GuyNeural", 
+"en-US-AriaNeural", 
+"en-US-DavisNeural", 
+"en-US-JaneNeural", 
+"en-US-JasonNeural", 
+"en-US-KaiNeural", 
+"en-US-LunaNeural", 
+"en-US-SaraNeural", 
+"en-US-TonyNeural", 
+"en-US-NancyNeural", 
+"en-US-AmberNeural", 
+"en-US-AnaNeural", 
+"en-US-AshleyNeural", 
+"en-US-BrandonNeural", 
+"en-US-ChristopherNeural", 
+"en-US-CoraNeural", 
+"en-US-ElizabethNeural", 
+"en-US-EricNeural", 
+"en-US-JacobNeural", 
+"en-US-MichelleNeural", 
+"en-US-MonicaNeural", 
+"en-US-RogerNeural", 
+"en-US-SteffanNeural", 
+"en-ZA-LeahNeural",
+]
 import { ActionTypes } from "./utils"
 import { Command, Action, TTSObject } from "../interfaces"
 import { callSignToNato } from "./string_processing"
 import OpenAI from "openai"
 import dotenv from "dotenv"
-import { promises as fs } from "fs"
-import { writeFileSync } from "fs"
-
-import type { IncomingMessage } from "http"
 import { Readable } from "stream"
 
 dotenv.config()
-const openai = new OpenAI()
 
 const clearedFlightLevelSentence = ["Cleared for flight level "]
 const clearedAirspeedSentence = ["Adjusting speed to "]
@@ -25,9 +100,6 @@ const cancelHeadingSentence = ["Cancelling heading instruction, resuming own nav
 const clearedDirectSentence = ["Proceeding direct to "]
 
 const clarifyCommandSentence = ["Sorry, I didn't catch that, please repeat."]
-
-const instructions =
-  "Speak like a real-life airline pilot with heavy swedish accent who is responding to a command. Fast and nonchalant."
 
 const getRandomSentence = (array: string[]): string => {
   const randomIndex = Math.floor(Math.random() * array.length)
@@ -86,25 +158,60 @@ export const clarifyCommand = async (skipTTS?: boolean): Promise<TTSObject> => {
   return obj
 }
 
+import axios from "axios"
+
+
+const AZURE_TTS_KEY = process.env.AZURE_TTS_KEY!
+const AZURE_TTS_REGION = process.env.AZURE_TTS_REGION!
+
+
+const chooseVoice = (lang: string) => {
+    switch(lang) { 
+   case "Scandinavian" : { 
+      return voiceModelsSWE[Math.floor(Math.random() * voiceModelsSWE.length)];;
+   } 
+   case "Norwegian": { 
+      return voiceModelsNOR[Math.floor(Math.random() * voiceModelsNOR.length)];;
+   } 
+   case "RyanAir": { 
+      return voiceModelsIRE[Math.floor(Math.random() * voiceModelsIRE.length)];;
+   } 
+   default: { 
+      return voiceModelsGEN[Math.floor(Math.random() * voiceModelsGEN.length)];;
+   } 
+} 
+}
+const voiceStyle = "chat" 
+
 const sendTTS = async (input: string): Promise<Buffer> => {
-  // Send to server
-  const response = await openai.audio.speech.create({
-    model: "gpt-4o-mini-tts",
-    voice: "verse",
-    input,
-    instructions,
-    response_format: "wav",
-  })
+const voiceName = chooseVoice(""); //byt till riktiga strängen
+    console.time("Azure TTS Request")
 
-  const { body } = response
+  const endpoint = `https://${AZURE_TTS_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`
 
-  // Handle the stream as a Node.js Readable stream (e.g., PassThrough stream)
-  if (body && body instanceof Readable) {
-    const buffer = await streamToBuffer(body) // Convert the stream to a buffer
-    return buffer
+  const headers = {
+    "Ocp-Apim-Subscription-Key": AZURE_TTS_KEY,
+    "Content-Type": "application/ssml+xml",
+    "X-Microsoft-OutputFormat": "riff-16khz-16bit-mono-pcm",
+    "User-Agent": "pilot-simulator",
   }
 
-  throw new Error("Unexpected response body type")
+  const ssml = `
+    <speak version="1.0" xml:lang="en-US">
+      <voice name="${voiceName}">
+        <prosody rate="0%" pitch="0%">
+          ${input}
+        </prosody>
+      </voice>
+    </speak>`
+
+  const response = await axios.post(endpoint, ssml, {
+    headers,
+    responseType: "arraybuffer",
+  })
+
+    console.timeEnd("Azure TTS Request")
+  return Buffer.from(response.data)
 }
 
 const streamToBuffer = (stream: Readable): Promise<Buffer> => {
