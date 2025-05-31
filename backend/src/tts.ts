@@ -100,6 +100,7 @@ const cancelHeadingSentence = ["Cancelling heading instruction, resuming own nav
 const clearedDirectSentence = ["Proceeding direct to "]
 
 const clarifyCommandSentence = ["Sorry, I didn't catch that, please repeat."]
+let callSignVoiceModelMap: Map<string, string> = new Map<string, string>();;
 
 const getRandomSentence = (array: string[]): string => {
     const randomIndex = Math.floor(Math.random() * array.length)
@@ -143,7 +144,7 @@ export const commandToSpeech = async (command: Command, skipTTS?: boolean): Prom
     if (!input) {
         return clarifyCommand()
     }
-    const audio = await sendTTS(input)
+    const audio = await sendTTS(input, command.callSign)
     const obj: TTSObject = { audio: audio.toString("base64"), pilotSentence: input }
     return obj
 }
@@ -153,7 +154,7 @@ export const clarifyCommand = async (skipTTS?: boolean): Promise<TTSObject> => {
         return { audio: null, pilotSentence: "testing testing" } as unknown as TTSObject
     }
     const input = getRandomSentence(clarifyCommandSentence)
-    const audio = await sendTTS(input)
+    const audio = await sendTTS(input, "ERR")
     const obj: TTSObject = { audio: audio.toString("base64"), pilotSentence: input }
     return obj
 }
@@ -166,27 +167,39 @@ const AZURE_TTS_KEY = process.env.AZURE_TTS_KEY!
 const AZURE_TTS_REGION = process.env.AZURE_TTS_REGION!
 
 
-const chooseVoice = (lang: string) => {
-    switch (lang) {
-        case "Scandinavian": {
-            return voiceModelsSWE[Math.floor(Math.random() * voiceModelsSWE.length)];;
+const chooseVoice = (callSign: string) => {
+    const threeLetters = callSign.slice(0,3);
+    switch (threeLetters) {
+        case "SAS": {
+            callSignVoiceModelMap.set(callSign, voiceModelsSWE[Math.floor(Math.random() * voiceModelsSWE.length)])
+            return;
         }
-        case "Norwegian": {
-            return voiceModelsNOR[Math.floor(Math.random() * voiceModelsNOR.length)];;
+        case "NSZ": {
+            callSignVoiceModelMap.set(callSign, voiceModelsNOR[Math.floor(Math.random() * voiceModelsNOR.length)])
+            return;
         }
-        case "RyanAir": {
-            return voiceModelsIRE[Math.floor(Math.random() * voiceModelsIRE.length)];;
+        case "NOZ": {
+            callSignVoiceModelMap.set(callSign, voiceModelsNOR[Math.floor(Math.random() * voiceModelsNOR.length)])
+            return;
+        }
+        case "RYR": {
+            callSignVoiceModelMap.set(callSign, voiceModelsIRE[Math.floor(Math.random() * voiceModelsIRE.length)])
+            return;
         }
         default: {
-            return voiceModelsGEN[Math.floor(Math.random() * voiceModelsGEN.length)];;
+            callSignVoiceModelMap.set(callSign, voiceModelsGEN[Math.floor(Math.random() * voiceModelsGEN.length)])
+            return;
         }
     }
 }
-const voiceStyle = "chat"
+// const voiceStyle = "chat"
 
-const sendTTS = async (input: string): Promise<Buffer> => {
-    const voiceName = chooseVoice(""); //byt till riktiga strängen
+const sendTTS = async (input: string,  callSign: string): Promise<Buffer> => {
     console.time("Azure TTS Request")
+    let voiceName = "";
+    if(!callSignVoiceModelMap.get(callSign))
+        chooseVoice(callSign)
+    voiceName = callSignVoiceModelMap.get(callSign) as string
 
     const endpoint = `https://${AZURE_TTS_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`
 

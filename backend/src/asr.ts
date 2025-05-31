@@ -125,7 +125,6 @@ const generateASRPrompt = async (overrideCallsigns?: CallsignObject[]): Promise<
             phonetic: data.callsignICAO,
             spoken: callSignToNato(data.callsign),
         })
-        //TODO Implement ICAOCallsing
     })
 
     //TESTING
@@ -139,7 +138,7 @@ const generateASRPrompt = async (overrideCallsigns?: CallsignObject[]): Promise<
         actionList.push(actionType)
     })
 
-    //console.log("WaypointList sent to NLU: " + waypointList.toString())
+    console.log("WaypointList sent to NLU: " + waypointList.toString())
     const callsignStrings = callsigns.map((callsign) => {
         const parts = callsign.phonetic.trim().split(" ");
         parts.pop(); // remove last word
