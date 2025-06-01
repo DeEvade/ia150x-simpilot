@@ -50,12 +50,15 @@ export const CommandLogViewer = () => {
         Clear log
       </div>
       <ul style={{ overflowY: "auto", maxHeight: "60vh", padding: "0" }}>
-        {[...log].reverse().map((entry, idx) => {
-          if (entry == null) return null
-          const x = JSON.parse(entry.log)
+        {[...log]
+          .reverse()
+          .slice(0, 3)
+          .map((entry, idx) => {
+            if (entry == null) return null
+            const x = JSON.parse(entry.log)
 
-          return <LogBox x={x} entry={entry} key={idx} />
-        })}
+            return <LogBox x={x} entry={entry} key={idx} />
+          })}
       </ul>
     </div>
   )
