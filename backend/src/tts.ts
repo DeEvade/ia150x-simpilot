@@ -261,11 +261,11 @@ const buildTTSPhrase = async (command: Command): Promise<string | null> => {
 
     const actionMap: Record<string, (param: string, callsign: string) => string> = {
         [ActionTypes.CLEARED_FLIGHT_LEVEL]: (param, callsign) =>
-            `${getRandomSentence(clearedFlightLevelSentence)}${param}, ${callsign}.`,
+            `${getRandomSentence(clearedFlightLevelSentence)}${callSignToNato(param)}, ${callsign}.`,
         [ActionTypes.CLEARED_AIRSPEED]: (param, callsign) =>
-            `${getRandomSentence(clearedAirspeedSentence)}${param} knots, ${callsign}.`,
+            `${getRandomSentence(clearedAirspeedSentence)}${callSignToNato(param)} knots, ${callsign}.`,
         [ActionTypes.CLEARED_MACH]: (param, callsign) =>
-            `${getRandomSentence(clearedMachSentence)}${param}, ${callsign}.`,
+            `${getRandomSentence(clearedMachSentence)}${callSignToNato(param)}, ${callsign}.`,
         [ActionTypes.CLEARED_HEADING]: (param, callsign) => {
             const phoneticHeading = headingParameter(param)
             return `${getRandomSentence(clearedHeadingSentence)}${phoneticHeading}, ${callsign}.`
@@ -298,9 +298,9 @@ const headingParameter = (headingString: string): string => {
     const heading = +headingString
     if (heading < 100) {
         if (heading < 10) {
-            return "Zero Zero " + heading.toString()
+            return "Zero Zero " + callSignToNato(heading.toString())
         } else {
-            return "Zero " + heading.toString()
+            return "Zero " + callSignToNato(heading.toString())
         }
     }
     return heading.toString()
