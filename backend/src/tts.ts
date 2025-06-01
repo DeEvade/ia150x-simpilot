@@ -303,5 +303,5 @@ const headingParameter = (headingString: string): string => {
             return "Zero " + callSignToNato(heading.toString())
         }
     }
-    return heading.toString()
+    return callSignToNato(heading.toString())
 }
