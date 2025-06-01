@@ -8,8 +8,8 @@ import { findICAO } from "./utils"
 configDotenv()
 const apiKey = process.env.OPENAI_KEY
 //{ baseURL: "http://localhost:1234/v1", apiKey: apiKey }
-// const openai = new OpenAI({ baseURL: "http://localhost:1234/v1", apiKey: apiKey })
-const openai = new OpenAI({ apiKey: apiKey })
+const openai = new OpenAI({ baseURL: "http://deploy.cloud.cbh.kth.se:20102/v1", apiKey: apiKey })
+//const openai = new OpenAI({ apiKey: apiKey })
 
 const trainingWaypointList = [
   "GATKI",
