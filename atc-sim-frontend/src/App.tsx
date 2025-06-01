@@ -1,6 +1,5 @@
 import * as React from "react"
 import VoiceRecorder from "./components/VoiceRecorder"
-import { FlightInfo } from "./components/FlightInfo"
 import { CommandLogViewer } from "./components/CommandLog"
 import { TopNotchSky } from "./components/TopNotchSky"
 
