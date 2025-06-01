@@ -28,6 +28,22 @@ export const processTranscription = async (
 ) => {
   console.log("config", config)
 
+  let flightData = FlightDataStore.getInstance().getAllFlightData()
+  let callsigns: Object[] = []
+  waypointList = []
+  //lägg in icao också
+  flightData.forEach((data: FlightData) => {
+    callsigns.push({
+      idCallsign: data.callsign,
+      phoneticCallsign: callSignToNato(data.callsign),
+      icaoCallsign: "",
+    })
+  })
+  if (overrideCallsigns) {
+    callsigns = overrideCallsigns
+    waypointList = trainingWaypointList
+  }
+
   const params = config.nlu_parameters
   try {
     const completion = await openai.chat.completions.create({
@@ -38,7 +54,16 @@ export const processTranscription = async (
         { role: "system", content: getTranscribeSystemPrompt(overrideCallsigns) },
         {
           role: "user",
-          content: transcript,
+          content: `
+##CallsignList
+[${callsigns.map((x) => JSON.stringify(x))}]
+
+##Waypointlist
+[${waypointList.toString()}]
+
+##Transcript 
+${transcript}
+        `,
         },
       ],
       store: true,
@@ -101,9 +126,6 @@ Your task is to use the transcription to extract the command's callsign, action 
     If you manage to match to a callsign in the list, you should always choose the "written" version of that callsign object.
     If you do not manage to extract a field, leave that field null.
 
-    You should try to match the callsign to one in the following list.
-    CallSignList: [${callsigns.map((x) => JSON.stringify(x))}]
-
 - Action:
     The available actions are as follows:
     ActionList: ["cleared airspeed", "cleared mach", "cleared flight level", "cleared altitude", "cleared heading", "cancel heading", "cancel speed", "cleared direct"] 
@@ -119,8 +141,6 @@ Your task is to use the transcription to extract the command's callsign, action 
         ["cancel heading", "cancel speed"]
     The folloing action is associated with a name:
         ["cleared direct"]
-    The name associated with "cleared direct" should be one of the following:
-        [${waypointList.toString()}]
 # Examples
 
 Given the following fake CallSignList:

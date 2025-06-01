@@ -41,6 +41,10 @@ export const FlightInfo = () => {
     return <div>No flight data available</div>
   }
 
+  const filteredFlightData = flightData.filter((flight) => {
+    return flight.callsign.toLowerCase().includes(searchTerm.toLowerCase())
+  })
+
   return (
     <div style={{ height: "90vh", overflowY: "scroll" }}>
       <h2>Flight Data</h2>
@@ -62,18 +66,17 @@ export const FlightInfo = () => {
           </tr>
         </thead>
         <tbody>
-          {Array.from(flightData.entries())
-            .filter((x) => x[1].callsign.toLowerCase().includes(searchTerm.toLowerCase()))
-            .map(([key, data]) => (
-              <tr key={key}>
-                <td>{data.callsign}</td>
-                <td>{data.lat}</td>
-                <td>{data.lon}</td>
-                <td>{(data.alt * 3.28084).toFixed(0)}</td>
-                <td>{((data.hdg * 180) / 3.141592).toFixed(0)}</td>
-                <td>{data.mach.toFixed(2)}</td>
-              </tr>
-            ))}
+          {Array.from(filteredFlightData.entries())
+          .map(([key, data]) => (
+            <tr key={key}>
+              <td>{data.callsign}</td>
+              <td>{data.lat}</td>
+              <td>{data.lon}</td>
+              <td>{(data.alt * 3.28084).toFixed(0)}</td>
+              <td>{((data.hdg * 180) / 3.141592).toFixed(0)}</td>
+              <td>{data.mach.toFixed(2)}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
