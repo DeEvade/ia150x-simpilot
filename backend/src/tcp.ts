@@ -89,7 +89,7 @@ export const sendCommandToServer = (command: Command) => {
   }
 }
 
-export const validateCommand = async (command: Command) => {
+export const validateCommand =  (command: Command) => {
   if (!!!command.action || !!!command.callSign) return false
   //callsign matches list??
   const flightDataStore = FlightDataStore.getInstance()
