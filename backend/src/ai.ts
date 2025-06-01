@@ -1,13 +1,16 @@
 import OpenAI from "openai"
 import FlightDataStore from "./FlightDataStore"
-import { CallsignObject, FlightData } from "../interfaces"
+import { CallsignObject, Command, FlightData } from "../interfaces"
 import { callSignToNato } from "./string_processing"
 import { configDotenv } from "dotenv"
 import fs from "fs"
+import { findICAO } from "./utils"
 configDotenv()
 const apiKey = process.env.OPENAI_KEY
 //{ baseURL: "http://localhost:1234/v1", apiKey: apiKey }
-const openai = new OpenAI({ baseURL: "http://localhost:1234/v1", apiKey: apiKey })
+// const openai = new OpenAI({ baseURL: "http://localhost:1234/v1", apiKey: apiKey })
+const openai = new OpenAI({ apiKey: apiKey })
+
 const trainingWaypointList = [
   "GATKI",
   "JEROM",
@@ -91,16 +94,20 @@ const getTranscribeSystemPrompt = (overrideCallsigns?: CallsignObject[]) => {
     callsigns.push({
       idCallsign: data.callsign,
       phoneticCallsign: callSignToNato(data.callsign),
-      icaoCallsign: "",
+      icaoCallsign: data.callsignICAO,
     })
   })
   if (overrideCallsigns) {
     callsigns = overrideCallsigns
     waypointList = trainingWaypointList
   }
+  console.log("callsigns sent to NLU: \n", callsigns)
+
+  waypointList = trainingWaypointList //TEMPORÄR
+
   //console.log("WaypointList sent to NLU: " + waypointList.toString())
-  //console.log("callsigns", callsigns)
-  //console.log("callsigns", callsigns)
+  // console.log("callsigns sent to NLU: ", callsigns)
+  // console.log("callsigns", callsigns)
 
   //Kanske borde para ihop alla callsignsigns, t ex [{SAS123, Sierra alpha sierra one two three, Scandinavian 123}, {UAL321, Uniform alpha lima three two one, United 321}]
   //och sedan säga att om den hör en av de så ta den som är längst till vänster

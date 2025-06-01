@@ -1,20 +1,95 @@
-const voiceModels = ["p225", "p226", "p227"]
-const ip = "0.0.0.0"
-const port = 1337
-let availableModels = Array.from(voiceModels)
-import { ActionTypes } from "./utils"
+const voiceModelsSWE: string[] = [
+    "sv-SE-MattiasNeural",
+    "sv-SE-HilleviNeural",
+]
+const voiceModelsNOR: string[] = [
+    "nb-NO-PernilleNeural",
+    "nb-NO-FinnNeural",
+]
+const voiceModelsIRE: string[] = [
+    "en-IE-EmilyNeural",
+    "en-IE-ConnorNeural",
+]
+const voiceModelsGEN: string[] = [
+    "en-GB-SoniaNeural",
+    "en-GB-RyanNeural",
+    "en-GB-LibbyNeural",
+    "en-GB-AbbiNeural",
+    "en-GB-AlfieNeural",
+    "en-GB-BellaNeural",
+    "en-GB-ElliotNeural",
+    "en-GB-EthanNeural",
+    "en-GB-HollieNeural",
+    "en-GB-MaisieNeural",
+    "en-GB-NoahNeural",
+    "en-GB-OliverNeural",
+    "en-GB-OliviaNeural",
+    "en-GB-ThomasNeural",
+    "en-HK-YanNeural",
+    "en-HK-SamNeural",
+    "en-IN-AaravNeural",
+    "en-IN-AashiNeural",
+    "en-IN-AartiNeural",
+    "en-IN-ArjunNeural",
+    "en-IN-AnanyaNeural",
+    "en-IN-KavyaNeural",
+    "en-IN-KunalNeural",
+    "en-IN-NeerjaNeural",
+    "en-IN-PrabhatNeural",
+    "en-IN-AartiIndicNeural",
+    "en-IN-ArjunIndicNeural",
+    "en-IN-NeerjaIndicNeural",
+    "en-IN-PrabhatIndicNeural",
+    "en-KE-AsiliaNeural",
+    "en-KE-ChilembaNeural",
+    "en-NG-EzinneNeural",
+    "en-NG-AbeoNeural",
+    "en-NZ-MollyNeural",
+    "en-NZ-MitchellNeural",
+    "en-PH-RosaNeural",
+    "en-PH-JamesNeural",
+    "en-SG-LunaNeural",
+    "en-SG-WayneNeural",
+    "en-TZ-ImaniNeural",
+    "en-TZ-ElimuNeural",
+    "en-US-AvaNeural",
+    "en-US-AndrewNeural",
+    "en-US-EmmaNeural",
+    "en-US-BrianNeural",
+    "en-US-JennyNeural",
+    "en-US-GuyNeural",
+    "en-US-AriaNeural",
+    "en-US-DavisNeural",
+    "en-US-JaneNeural",
+    "en-US-JasonNeural",
+    "en-US-KaiNeural",
+    "en-US-LunaNeural",
+    "en-US-SaraNeural",
+    "en-US-TonyNeural",
+    "en-US-NancyNeural",
+    "en-US-AmberNeural",
+    "en-US-AnaNeural",
+    "en-US-AshleyNeural",
+    "en-US-BrandonNeural",
+    "en-US-ChristopherNeural",
+    "en-US-CoraNeural",
+    "en-US-ElizabethNeural",
+    "en-US-EricNeural",
+    "en-US-JacobNeural",
+    "en-US-MichelleNeural",
+    "en-US-MonicaNeural",
+    "en-US-RogerNeural",
+    "en-US-SteffanNeural",
+    "en-ZA-LeahNeural",
+]
+import { ActionTypes, findSingleICAO } from "./utils"
 import { Command, Action, TTSObject } from "../interfaces"
 import { callSignToNato } from "./string_processing"
 import OpenAI from "openai"
 import dotenv from "dotenv"
-import { promises as fs } from "fs"
-import { writeFileSync } from "fs"
-
-import type { IncomingMessage } from "http"
 import { Readable } from "stream"
 
 dotenv.config()
-const openai = new OpenAI()
 
 const clearedFlightLevelSentence = ["Cleared for flight level "]
 const clearedAirspeedSentence = ["Adjusting speed to "]
@@ -25,13 +100,11 @@ const cancelHeadingSentence = ["Cancelling heading instruction, resuming own nav
 const clearedDirectSentence = ["Proceeding direct to "]
 
 const clarifyCommandSentence = ["Sorry, I didn't catch that, please repeat."]
-
-const instructions =
-  "Speak like a real-life airline pilot with heavy swedish accent who is responding to a command. Fast and nonchalant."
+let callSignVoiceModelMap: Map<string, string> = new Map<string, string>();;
 
 const getRandomSentence = (array: string[]): string => {
-  const randomIndex = Math.floor(Math.random() * array.length)
-  return array[randomIndex]
+    const randomIndex = Math.floor(Math.random() * array.length)
+    return array[randomIndex]
 }
 
 /*
@@ -64,114 +137,171 @@ const planeDisappearedFromTheInsideOfTheComputerizedSimulator = (plane : id) => 
 */
 
 export const commandToSpeech = async (command: Command, skipTTS?: boolean): Promise<TTSObject> => {
-  if (skipTTS) {
-    return { audio: null, pilotSentence: "testing testing" } as unknown as TTSObject
-  }
-  const input = buildTTSPhrase(command) as string
-  if (!input) {
-    return clarifyCommand()
-  }
-  const audio = await sendTTS(input)
-  const obj: TTSObject = { audio: audio.toString("base64"), pilotSentence: input }
-  return obj
+    if (skipTTS) {
+        return { audio: null, pilotSentence: "testing testing" } as unknown as TTSObject
+    }
+    const input = await buildTTSPhrase(command)
+    if (!input) {
+        return clarifyCommand()
+    }
+    const audio = await sendTTS(input, command.callSign)
+    const obj: TTSObject = { audio: audio.toString("base64"), pilotSentence: input }
+    return obj
 }
 
 export const clarifyCommand = async (skipTTS?: boolean): Promise<TTSObject> => {
-  if (skipTTS) {
-    return { audio: null, pilotSentence: "testing testing" } as unknown as TTSObject
-  }
-  const input = getRandomSentence(clarifyCommandSentence)
-  const audio = await sendTTS(input)
-  const obj: TTSObject = { audio: audio.toString("base64"), pilotSentence: input }
-  return obj
+    if (skipTTS) {
+        return { audio: null, pilotSentence: "testing testing" } as unknown as TTSObject
+    }
+    const input = getRandomSentence(clarifyCommandSentence)
+    const audio = await sendTTS(input, "ERR")
+    const obj: TTSObject = { audio: audio.toString("base64"), pilotSentence: input }
+    return obj
 }
 
-const sendTTS = async (input: string): Promise<Buffer> => {
-  // Send to server
-  const response = await openai.audio.speech.create({
-    model: "gpt-4o-mini-tts",
-    voice: "verse",
-    input,
-    instructions,
-    response_format: "wav",
-  })
+import axios from "axios"
+import FlightDataStore from "./FlightDataStore"
 
-  const { body } = response
 
-  // Handle the stream as a Node.js Readable stream (e.g., PassThrough stream)
-  if (body && body instanceof Readable) {
-    const buffer = await streamToBuffer(body) // Convert the stream to a buffer
-    return buffer
-  }
+const AZURE_TTS_KEY = process.env.AZURE_TTS_KEY!
+const AZURE_TTS_REGION = process.env.AZURE_TTS_REGION!
 
-  throw new Error("Unexpected response body type")
+
+const chooseVoice = (callSign: string) => {
+    const threeLetters = callSign.slice(0,3);
+    switch (threeLetters) {
+        case "SAS": {
+            callSignVoiceModelMap.set(callSign, voiceModelsSWE[Math.floor(Math.random() * voiceModelsSWE.length)])
+            return;
+        }
+        case "NSZ": {
+            callSignVoiceModelMap.set(callSign, voiceModelsNOR[Math.floor(Math.random() * voiceModelsNOR.length)])
+            return;
+        }
+        case "NOZ": {
+            callSignVoiceModelMap.set(callSign, voiceModelsNOR[Math.floor(Math.random() * voiceModelsNOR.length)])
+            return;
+        }
+        case "RYR": {
+            callSignVoiceModelMap.set(callSign, voiceModelsIRE[Math.floor(Math.random() * voiceModelsIRE.length)])
+            return;
+        }
+        default: {
+            callSignVoiceModelMap.set(callSign, voiceModelsGEN[Math.floor(Math.random() * voiceModelsGEN.length)])
+            return;
+        }
+    }
+}
+// const voiceStyle = "chat"
+
+const sendTTS = async (input: string,  callSign: string): Promise<Buffer> => {
+    console.time("Azure TTS Request")
+    let voiceName = "";
+    if(!callSignVoiceModelMap.get(callSign))
+        chooseVoice(callSign)
+    voiceName = callSignVoiceModelMap.get(callSign) as string
+
+    const endpoint = `https://${AZURE_TTS_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`
+
+    const headers = {
+        "Ocp-Apim-Subscription-Key": AZURE_TTS_KEY,
+        "Content-Type": "application/ssml+xml",
+        "X-Microsoft-OutputFormat": "riff-16khz-16bit-mono-pcm",
+        "User-Agent": "pilot-simulator",
+    }
+
+    const ssml = `
+    <speak version="1.0" xml:lang="en-US">
+      <voice name="${voiceName}">
+        <prosody rate="0%" pitch="0%">
+          ${input}
+        </prosody>
+      </voice>
+    </speak>`
+
+    const response = await axios.post(endpoint, ssml, {
+        headers,
+        responseType: "arraybuffer",
+    })
+
+    console.timeEnd("Azure TTS Request")
+    return Buffer.from(response.data)
 }
 
 const streamToBuffer = (stream: Readable): Promise<Buffer> => {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = []
+    return new Promise((resolve, reject) => {
+        const chunks: Buffer[] = []
 
-    stream.on("data", (chunk) => {
-      chunks.push(chunk) // Collect chunks of data
+        stream.on("data", (chunk) => {
+            chunks.push(chunk) // Collect chunks of data
+        })
+
+        stream.on("end", () => {
+            resolve(Buffer.concat(chunks)) // Concatenate chunks and resolve as a buffer
+        })
+
+        stream.on("error", reject) // Reject if an error occurs
     })
-
-    stream.on("end", () => {
-      resolve(Buffer.concat(chunks)) // Concatenate chunks and resolve as a buffer
-    })
-
-    stream.on("error", reject) // Reject if an error occurs
-  })
 }
 
-const buildTTSPhrase = (command: Command): string | null => {
-  if (!command.callSign) return null
-  const callSign = callSignToNato(command.callSign)
-  const action = command.action as string
-  const parameter = command.parameter
+const buildTTSPhrase = async (command: Command): Promise<string | null> => {
+    if (!command.callSign) return null
+    const callSignNumbers = command.callSign.slice(3)
+    let callSign = callSignToNato(command.callSign)
+    const callSignICAO = await findSingleICAO(command.callSign)
+    console.log("callSignICAO: ", callSignICAO)
+    if (callSignICAO) {
+        const parts = callSignICAO.trim().split(" ");
+        parts.pop(); // remove the last word
+        callSign = parts.join(" ") + " " + callSignToNato(callSignNumbers);
+    }
 
-  const actionMap: Record<string, (param: string, callsign: string) => string> = {
-    [ActionTypes.CLEARED_FLIGHT_LEVEL]: (param, callsign) =>
-      `${getRandomSentence(clearedFlightLevelSentence)}${param}, ${callsign}.`,
-    [ActionTypes.CLEARED_AIRSPEED]: (param, callsign) =>
-      `${getRandomSentence(clearedAirspeedSentence)}${param} knots, ${callsign}.`,
-    [ActionTypes.CLEARED_MACH]: (param, callsign) =>
-      `${getRandomSentence(clearedMachSentence)}${param}, ${callsign}.`,
-    [ActionTypes.CLEARED_HEADING]: (param, callsign) => {
-      const phoneticHeading = headingParameter(param)
-      return `${getRandomSentence(clearedHeadingSentence)}${phoneticHeading}, ${callsign}.`
-    },
-    [ActionTypes.CANCEL_SPEED]: (_, callsign) =>
-      `${getRandomSentence(cancelSpeedSentence)}, ${callsign}.`,
-    [ActionTypes.CANCEL_HEADING]: (_, callsign) =>
-      `${getRandomSentence(cancelHeadingSentence)}${callsign}.`,
-    [ActionTypes.CLEARED_DIRECT]: (param, callsign) =>
-      `${getRandomSentence(clearedDirectSentence)}${param}, ${callsign}.`,
-  }
+    const action = command.action as string
+    const parameter = command.parameter
 
-  const noParamActions: Set<string> = new Set([
-    ActionTypes.CANCEL_HEADING,
-    ActionTypes.CANCEL_SPEED,
-  ])
+    const actionMap: Record<string, (param: string, callsign: string) => string> = {
+        [ActionTypes.CLEARED_FLIGHT_LEVEL]: (param, callsign) =>
+            `${getRandomSentence(clearedFlightLevelSentence)}${param}, ${callsign}.`,
+        [ActionTypes.CLEARED_AIRSPEED]: (param, callsign) =>
+            `${getRandomSentence(clearedAirspeedSentence)}${param} knots, ${callsign}.`,
+        [ActionTypes.CLEARED_MACH]: (param, callsign) =>
+            `${getRandomSentence(clearedMachSentence)}${param}, ${callsign}.`,
+        [ActionTypes.CLEARED_HEADING]: (param, callsign) => {
+            const phoneticHeading = headingParameter(param)
+            return `${getRandomSentence(clearedHeadingSentence)}${phoneticHeading}, ${callsign}.`
+        },
+        [ActionTypes.CANCEL_SPEED]: (_, callsign) =>
+            `${getRandomSentence(cancelSpeedSentence)}, ${callsign}.`,
+        [ActionTypes.CANCEL_HEADING]: (_, callsign) =>
+            `${getRandomSentence(cancelHeadingSentence)}${callsign}.`,
+        [ActionTypes.CLEARED_DIRECT]: (param, callsign) =>
+            `${getRandomSentence(clearedDirectSentence)}${param}, ${callsign}.`,
+    }
 
-  if (actionMap[action] == null) {
-    return null
-  }
+    const noParamActions: Set<string> = new Set([
+        ActionTypes.CANCEL_HEADING,
+        ActionTypes.CANCEL_SPEED,
+    ])
 
-  if (parameter == null && noParamActions.has(action)) {
-    return actionMap[action]!(null as any, callSign)
-  }
+    if (actionMap[action] == null) {
+        return null
+    }
 
-  return actionMap[action]!(parameter.toString(), callSign)
+    if (parameter == null && noParamActions.has(action)) {
+        return actionMap[action]!(null as any, callSign)
+    }
+
+    return actionMap[action]!(parameter.toString(), callSign)
 }
 
 const headingParameter = (headingString: string): string => {
-  const heading = +headingString
-  if (heading < 100) {
-    if (heading < 10) {
-      return "Zero Zero " + heading.toString()
-    } else {
-      return "Zero " + heading.toString()
+    const heading = +headingString
+    if (heading < 100) {
+        if (heading < 10) {
+            return "Zero Zero " + heading.toString()
+        } else {
+            return "Zero " + heading.toString()
+        }
     }
-  }
-  return heading.toString()
+    return heading.toString()
 }

@@ -3,6 +3,7 @@ import { getFlightData } from "../apiUtils"
 
 export interface FlightData {
   callsign: string
+  callsignICAO: string
   lat: number //rad
   lon: number //rad
   alt: number //meter
@@ -46,7 +47,7 @@ export const FlightInfo = () => {
   })
 
   return (
-    <div style={{ height: "90vh", overflowY: "scroll" }}>
+    <div style={{ height: "70vh", overflowY: "scroll" }}>
       <h2>Flight Data</h2>
       <input
         type="text"
@@ -57,6 +58,7 @@ export const FlightInfo = () => {
       <table>
         <thead>
           <tr>
+            <th>Phonetic</th>
             <th>Callsign</th>
             <th>Latitude</th>
             <th>Longitude</th>
@@ -66,8 +68,7 @@ export const FlightInfo = () => {
           </tr>
         </thead>
         <tbody>
-          {Array.from(filteredFlightData.entries())
-          .map(([key, data]) => (
+          {Array.from(filteredFlightData.entries()).map(([key, data]) => (
             <tr key={key}>
               <td>{data.callsign}</td>
               <td>{data.lat}</td>

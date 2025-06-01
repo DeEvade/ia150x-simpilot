@@ -10,9 +10,8 @@ app = FastAPI()
 
 # Load the fine-tuned Whisper model
 device = torch.device("mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu")
-#model_path = "deevade/whisper-small-finetuned-long"
+model_path = "deevade/whisper-small-finetuned-long"
 
-model_path = "./training/openai/whisper-small-finetuned2"
 
 #model_path = "openai/whisper-tiny"
 model = WhisperForConditionalGeneration.from_pretrained(model_path)
